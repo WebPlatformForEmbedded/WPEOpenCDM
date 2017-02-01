@@ -20,10 +20,10 @@
 #include <rpc/rpc.h>
 #include <string>
 
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_common.h"
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_com.h"
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_com_callback_receiver.h"
-#include "media/cdm/ppapi/external_open_cdm/com/common/rpc/opencdm_callback.h"
+#include <open_cdm_platform_common.h>
+#include <open_cdm_platform_com.h>
+#include <open_cdm_platform_com_callback_receiver.h>
+#include <opencdm_callback.h>
 
 namespace media {
 
@@ -34,7 +34,9 @@ class RpcCdmPlatformHandler : public OpenCdmPlatformCom {
 
   // EME equivalent: new MediaKeys()
   MediaKeysResponse MediaKeys(std::string key_system) override;
-
+  //EME equivalent : media_key_.isTypeSupported()
+  MediaKeyTypeResponse IsTypeSupported(const std::string&,
+                                            const std::string&) override;
   // EME equivalent: media_keys_.createSession()
   MediaKeysCreateSessionResponse MediaKeysCreateSession(
       const std::string& init_data_type, const uint8_t* init_data,
@@ -46,7 +48,7 @@ class RpcCdmPlatformHandler : public OpenCdmPlatformCom {
 
   // EME equivalent: media_key_session_.update()
   MediaKeySessionUpdateResponse MediaKeySessionUpdate(
-      const uint8 *pbKey, uint32 cbKey, char *session_id_val,
+      const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
       uint32_t session_id_len) override;
 
   // EME equivalent: media_key_session_.release()

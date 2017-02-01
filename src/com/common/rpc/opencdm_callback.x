@@ -5,7 +5,7 @@
 
 struct rpc_cb_message {
     char session_id <>;
-    string message <>;
+    char message <>;
     string destination_url <>;
 };
 

@@ -8,11 +8,13 @@
 bool_t
 xdr_rpc_cb_message (XDR *xdrs, rpc_cb_message *objp)
 {
+	register int32_t *buf;
 
 	 if (!xdr_array (xdrs, (char **)&objp->session_id.session_id_val, (u_int *) &objp->session_id.session_id_len, ~0,
 		sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;
-	 if (!xdr_string (xdrs, &objp->message, ~0))
+	 if (!xdr_array (xdrs, (char **)&objp->message.message_val, (u_int *) &objp->message.message_len, ~0,
+		sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;
 	 if (!xdr_string (xdrs, &objp->destination_url, ~0))
 		 return FALSE;
@@ -22,6 +24,7 @@ xdr_rpc_cb_message (XDR *xdrs, rpc_cb_message *objp)
 bool_t
 xdr_rpc_cb_key_status_update (XDR *xdrs, rpc_cb_key_status_update *objp)
 {
+	register int32_t *buf;
 
 	 if (!xdr_array (xdrs, (char **)&objp->session_id.session_id_val, (u_int *) &objp->session_id.session_id_len, ~0,
 		sizeof (char), (xdrproc_t) xdr_char))
@@ -34,6 +37,7 @@ xdr_rpc_cb_key_status_update (XDR *xdrs, rpc_cb_key_status_update *objp)
 bool_t
 xdr_rpc_cb_ready (XDR *xdrs, rpc_cb_ready *objp)
 {
+	register int32_t *buf;
 
 	 if (!xdr_array (xdrs, (char **)&objp->session_id.session_id_val, (u_int *) &objp->session_id.session_id_len, ~0,
 		sizeof (char), (xdrproc_t) xdr_char))
@@ -44,6 +48,7 @@ xdr_rpc_cb_ready (XDR *xdrs, rpc_cb_ready *objp)
 bool_t
 xdr_rpc_cb_error (XDR *xdrs, rpc_cb_error *objp)
 {
+	register int32_t *buf;
 
 	 if (!xdr_array (xdrs, (char **)&objp->session_id.session_id_val, (u_int *) &objp->session_id.session_id_len, ~0,
 		sizeof (char), (xdrproc_t) xdr_char))

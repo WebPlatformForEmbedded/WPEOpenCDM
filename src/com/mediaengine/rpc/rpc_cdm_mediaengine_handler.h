@@ -20,8 +20,8 @@
 #include <rpc/rpc.h>
 #include <string>
 
-#include "media/cdm/ppapi/external_open_cdm/com/common/shmemsem/shmemsem_helper.h"
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine_com.h"
+#include <shmemsem_helper.h>
+#include <open_cdm_mediaengine_com.h>
 
 namespace media {
 
@@ -38,6 +38,7 @@ class RpcCdmMediaengineHandler : public OpenCdmMediaengineCom {
   DecryptResponse Decrypt(const uint8_t *pbIv, uint32_t cbIv,
                                   const uint8_t *pbData, uint32_t cbData,
                                   uint8_t *out, uint32_t &out_size) override;
+  int ReleaseMem() override;
   //TODO (sph): make out const
   ~RpcCdmMediaengineHandler() override;
 

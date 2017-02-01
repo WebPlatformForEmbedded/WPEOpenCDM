@@ -17,11 +17,11 @@
 #ifndef MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_MEDIAENGINE_OPEN_CDM_MEDIAENGINE_IMPL_H_
 #define MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_MEDIAENGINE_OPEN_CDM_MEDIAENGINE_IMPL_H_
 
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine.h"
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine_com.h"
+#include "open_cdm_mediaengine.h"
+#include "open_cdm_mediaengine_com.h"
 #include <rpc/rpc.h>
 #include <string>
-#include "media/cdm/ppapi/external_open_cdm/com/common/shmemsem/shmemsem_helper.h"
+#include "../com/common/shmemsem/shmemsem_helper.h"
 
 namespace media {
 
@@ -41,7 +41,7 @@ class OpenCdmMediaengineImpl : public OpenCdmMediaengine {
   DecryptResponse Decrypt(const uint8_t *pbIv, uint32_t cbIv,
                                   const uint8_t *pbData, uint32_t cbData,
                                   uint8_t *out, uint32_t &out_size) override;
-
+  int ReleaseMem() override;
   ~OpenCdmMediaengineImpl() override;
  private:
   OpenCdmMediaengineCom *media_engine_com_;

@@ -17,11 +17,11 @@
 #include <pthread.h>
 #include <rpc/pmap_clnt.h>
 #include <map>
-#include "media/cdm/ppapi/external_open_cdm/com/cdm/rpc/rpc_cdm_platform_handler.h"
-#include "media/cdm/ppapi/cdm_logging.h"
+#include "rpc_cdm_platform_handler.h"
+#include <cdm_logging.h>
 
 extern "C" {
-#include "media/cdm/ppapi/external_open_cdm/com/common/rpc/opencdm_xdr.h"
+#include <opencdm_xdr.h>
 }
 
 typedef struct {
@@ -118,7 +118,6 @@ RpcCdmPlatformHandler::RpcCdmPlatformHandler(
   CDM_DLOG() << "thread created: " << rc;
 
   com_state = INITIALIZED;
-
   // TODO(sph): pthread_exit to terminate thread
 }
 
@@ -147,17 +146,16 @@ void RpcCdmPlatformHandler::OnKeyStatusUpdate1SvcDelegate(
   session_id.session_id_len = kmm->session_id.session_id_len;
   session_id.session_id = kmm->session_id.session_id_val;
 
+  CDM_DLOG() << "on_key_status_update_1_svc 1";
   p_instance->callback_receiver_->OnKeyStatusUpdateCallback(session_id, message);
+  CDM_DLOG() << "on_key_status_update_1_svc 2";
 }
 
 
 void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
 {
   CDM_DLOG() << "on_key_message_1_svc";
-  CDM_DLOG() << "len: " << kmm->session_id.session_id_len;
-  CDM_DLOG() << "val lic. " << kmm->destination_url;
 
-  std::string s;
   std::string delimiter = "#SPLIT#";
   std::string laURL;
   std::string message;
@@ -166,11 +164,11 @@ void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
   session_id.session_id_len = kmm->session_id.session_id_len;
   session_id.session_id = kmm->session_id.session_id_val;
 
-  s = kmm->destination_url;
+  std::string s(kmm->message.message_val,kmm->message.message_len);
   laURL = s.substr(0, s.find(delimiter));
+
   message = s.substr(s.find(delimiter) + delimiter.size(), s.size());
-  CDM_DLOG() << "LA_URL: " << laURL.c_str();
-  CDM_DLOG() << "KEY_MESSAGE received: " << message.c_str();
+
 
   //get open_media_keys instance to execute callbacks
   this->callback_receiver_->MessageCallback(session_id, message, laURL);
@@ -184,7 +182,7 @@ void RpcCdmPlatformHandler::OnReady1SvcDelegate(rpc_cb_ready *keyready_param, st
 
 void RpcCdmPlatformHandler::OnReady1Svc(rpc_cb_ready *kr, struct svc_req *)
 {
-  CDM_DLOG() << "on_key_ready_1_svc";
+  CDM_DLOG() << "on_key_ready_1_svc OnReady1SvcDelegate";
   OpenCdmPlatformSessionId session_id;
 
   session_id.session_id_len = kr->session_id.session_id_len;
@@ -223,6 +221,7 @@ void RpcCdmPlatformHandler::RpcCallbackPrivate(struct svc_req *rqstp, register S
   xdrproc_t _xdr_argument, _xdr_result;
   char *(*local)(char *, struct svc_req *, RpcCdmPlatformHandler *);
 
+  CDM_DLOG() << "RpcCallbackPrivate \n";
   switch (rqstp->rq_proc) {
   case NULLPROC:
     (void) svc_sendreply (transp, (xdrproc_t) xdr_void, (char *)NULL);
@@ -349,9 +348,69 @@ MediaKeysResponse RpcCdmPlatformHandler::MediaKeys(std::string key_system) {
     CDM_DLOG() << "cdm_mediakeys_rpc_1 failed\n ";
     response.platform_response = PLATFORM_CALL_FAIL;
   }
-
+  free(rpc_param.key_system.key_system_val);
   return response;
 }
+  //EME equivalent : media_key_.isTypeSupported()
+MediaKeyTypeResponse RpcCdmPlatformHandler::IsTypeSupported(const std::string& key_system,
+                                            const std::string& mime_type) {
+  CDM_DLOG() << "RpcCdmPlatformHandler:: IsTypeSupported";
+  MediaKeyTypeResponse response;
+
+  // rpc not ready
+  if (com_state == FAULTY) {
+    response.platform_response = PLATFORM_CALL_FAIL;
+    CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeys connection state faulty";
+    return response;
+  }
+
+  if ((rpc_client = clnt_create(rpc_server_host.c_str(), OPEN_CDM,
+                                OPEN_CDM_EME_5,
+                                "tcp")) == NULL) {
+    com_state = FAULTY;
+    clnt_pcreateerror(rpc_server_host.c_str());
+    response.platform_response = PLATFORM_CALL_FAIL;
+    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
+    return response;
+  } else {
+    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
+  }
+
+  //Pass keysystem
+  rpc_response_generic *rpc_response;
+  rpc_request_is_type_supported rpc_param;
+  rpc_param.key_system.key_system_val = reinterpret_cast<char *>(
+      malloc(key_system.size()));
+  memcpy(rpc_param.key_system.key_system_val, key_system.c_str(),
+         key_system.size());
+  CDM_DLOG() << "Pass keysystem " << key_system << "\n";
+  CDM_DLOG() << "Pass keysystem len  " << key_system.size();
+  rpc_param.key_system.key_system_len = key_system.size();
+ //pass mimeType
+  rpc_param.mime_type.mime_type_val = reinterpret_cast<char *>(
+      malloc(mime_type.size()));
+  memcpy(rpc_param.mime_type.mime_type_val, mime_type.c_str(),
+         mime_type.size());
+  rpc_param.mime_type.mime_type_len = mime_type.size();
+
+ //rpc call to server
+  if ((rpc_response = rpc_open_cdm_is_type_supported_1(&rpc_param, rpc_client))
+      == NULL) {
+    clnt_perror(rpc_client, rpc_server_host.c_str());
+  }
+
+  if (rpc_response->platform_val == 0) {
+    CDM_DLOG() << "rpc_open_cdm_is_type_supported_1 success\n ";
+    response.platform_response = PLATFORM_CALL_SUCCESS;
+  } else {
+    CDM_DLOG() << "rpc_open_cdm_is_type_supported_1 failed\n ";
+    response.platform_response = PLATFORM_CALL_FAIL;
+  }
+  free(rpc_param.mime_type.mime_type_val);
+  free(rpc_param.key_system.key_system_val);
+  return response;
+}
+
 
 MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
     const std::string& init_data_type, const uint8_t* init_data,
@@ -416,6 +475,9 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
     response.platform_response = PLATFORM_CALL_FAIL;
     CDM_DLOG() << "MediaKeys_CreateSession failed\n ";
   }
+  free(rpc_param.callback_info.hostname.hostname_val);
+  free(rpc_param.init_data.init_data_val);
+  free(rpc_param.init_data_type.init_data_type_val);
   return response;
 }
 
@@ -455,7 +517,7 @@ MediaKeysLoadSessionResponse RpcCdmPlatformHandler::MediaKeysLoadSession(
 }
 
 MediaKeySessionUpdateResponse RpcCdmPlatformHandler::MediaKeySessionUpdate(
-    const uint8 *pbKey, uint32 cbKey, char *session_id_val,
+    const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
     uint32_t session_id_len) {
   CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionUpdate";
   MediaKeySessionUpdateResponse response;
@@ -481,15 +543,16 @@ MediaKeySessionUpdateResponse RpcCdmPlatformHandler::MediaKeySessionUpdate(
       &rpc_param, rpc_client)) == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
   }
-
-  if (rpc_response->platform_val == 0) {
-    CDM_DLOG() << "MediaKeySessionUpdate success\n ";
-    response.platform_response = PLATFORM_CALL_SUCCESS;
-  } else {
-    CDM_DLOG() << "MediaKeySessionUpdate failed\n ";
-    response.platform_response = PLATFORM_CALL_FAIL;
+  if (rpc_response) {
+    if (rpc_response->platform_val == 0) {
+       CDM_DLOG() << "MediaKeySessionUpdate success\n ";
+       response.platform_response = PLATFORM_CALL_SUCCESS;
+    } else {
+       CDM_DLOG() << "MediaKeySessionUpdate failed\n ";
+       response.platform_response = PLATFORM_CALL_FAIL;
+    }
   }
-
+  free(rpc_param.key.key_val);
   return response;
 }
 

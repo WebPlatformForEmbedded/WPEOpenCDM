@@ -18,8 +18,8 @@
 #define MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_CDM_OPEN_CDM_PLATFORM_H_
 
 #include <string>
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_common.h"
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_com_callback_receiver.h"
+#include "open_cdm_platform_common.h"
+#include "open_cdm_platform_com_callback_receiver.h"
 
 namespace media {
 
@@ -42,13 +42,16 @@ class OpenCdmPlatform {
 
   // EME equivalent: media_key_session_.update()
   virtual MediaKeySessionUpdateResponse MediaKeySessionUpdate(
-      const uint8 *pbKey, uint32 cbKey, char *session_id_val,
+      const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
       uint32_t session_id_len) = 0;
 
   // EME equivalent: media_key_session_.release()
   virtual MediaKeySessionReleaseResponse MediaKeySessionRelease(
       char *session_id_val, uint32_t session_id_len) = 0;
 
+  //EME equivalent : media_key_.isTypeSupported()
+  virtual MediaKeyTypeResponse IsTypeSupported(const std::string&,
+                                            const std::string&) = 0;
 
   virtual ~OpenCdmPlatform() {
   }

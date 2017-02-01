@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "media/cdm/ppapi/external_open_cdm/cdm/open_cdm_platform_impl.h"
-#include "media/cdm/ppapi/external_open_cdm/com/cdm/open_cdm_platform_com_handler_factory.h"
-#include "media/cdm/ppapi/cdm_logging.h"
+#include "open_cdm_platform_impl.h"
+#include <open_cdm_platform_com_handler_factory.h>
+#include <cdm_logging.h>
 
 namespace media {
 
@@ -57,7 +57,7 @@ MediaKeysLoadSessionResponse OpenCdmPlatformImpl::MediaKeysLoadSession(
 }
 
 MediaKeySessionUpdateResponse OpenCdmPlatformImpl::MediaKeySessionUpdate(
-    const uint8 *pbKey, uint32 cbKey, char *session_id_val,
+    const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
     uint32_t session_id_len) {
   CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionUpdate";
   MediaKeySessionUpdateResponse response;
@@ -79,6 +79,14 @@ MediaKeySessionReleaseResponse OpenCdmPlatformImpl::MediaKeySessionRelease(
   return response;
 }
 
+MediaKeyTypeResponse OpenCdmPlatformImpl::IsTypeSupported(
+    const std::string& keysystem,const std::string& mimeType) {
+
+    CDM_DLOG() << "OpenCdmPlatformCdmiImpl::IsTypeSupported";
+    MediaKeyTypeResponse response = com_handler_->IsTypeSupported(keysystem,mimeType);
+    return response;
+}
+
 // OpenCdmComCallbackReceiver inheritance
 void OpenCdmPlatformImpl::ErrorCallback(
     OpenCdmPlatformSessionId platform_session_id, uint32_t sys_err,
@@ -87,7 +95,7 @@ void OpenCdmPlatformImpl::ErrorCallback(
 }
 
 void OpenCdmPlatformImpl::MessageCallback(
-    OpenCdmPlatformSessionId platform_session_id, std::string message,
+    OpenCdmPlatformSessionId platform_session_id, std::string& message,
     std::string destination_url) {
   callback_receiver_->MessageCallback(platform_session_id, message,
                                       destination_url);

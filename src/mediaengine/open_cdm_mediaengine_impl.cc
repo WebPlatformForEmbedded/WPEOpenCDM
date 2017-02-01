@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine_impl.h"
-#include "media/cdm/ppapi/external_open_cdm/com/mediaengine/rpc/rpc_cdm_mediaengine_handler.h"
-
-#include "media/cdm/ppapi/cdm_logging.h"
+#include "open_cdm_mediaengine_impl.h"
+#include <rpc_cdm_mediaengine_handler.h>
+#include <cdm_logging.h>
 
 namespace media {
 
@@ -48,7 +47,6 @@ DecryptResponse OpenCdmMediaengineImpl::Decrypt(const uint8_t *pbIv,
                                                 const uint8_t *pbData,
                                                 uint32_t cbData, uint8_t *out,
                                                 uint32_t &out_size) {
-  printf("_------ Decrypt \n");
   CDM_DLOG() << "OpenCdmMediaengineImpl::Decrypt: ";
   DecryptResponse response;
 
@@ -58,4 +56,10 @@ DecryptResponse OpenCdmMediaengineImpl::Decrypt(const uint8_t *pbIv,
   return response;
 }
 
+int OpenCdmMediaengineImpl::ReleaseMem() {
+  CDM_DLOG() << "OpenCdmMediaengineImpl::ReleaseMem ";
+  int response;
+  response = media_engine_com_->ReleaseMem();
+  return response;
+}
 }  // namespace media

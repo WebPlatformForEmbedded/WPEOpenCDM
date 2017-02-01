@@ -19,15 +19,14 @@
 
 #include <string>
 
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine.h"
-#include "media/cdm/ppapi/external_open_cdm/mediaengine/open_cdm_mediaengine_impl.h"
+#include "open_cdm_mediaengine.h"
+#include "open_cdm_mediaengine_impl.h"
 
-#include "media/cdm/ppapi/cdm_logging.h"
+#include "../common/cdm_logging.h"
 
 namespace media {
 
-//const std::string open_cdm_key_system = "com.opencdm.mockdrm";
-const std::string open_cdm_key_system = "org.chromium.externalclearkey";
+const std::string open_cdm_key_system = "com.widevine.alpha";
 
 // TODO(ska): outsource the mapping of key system string
 // to mediaengine and platform implementations
@@ -44,14 +43,9 @@ class OpenCdmMediaengineFactory {
  */
 OpenCdmMediaengine *OpenCdmMediaengineFactory::Create(
     std::string key_system, OpenCdmPlatformSessionId session_id) {
-  if (key_system == open_cdm_key_system) {
     CDM_DLOG() << "Instantiate OpenCdmMediaengineImpl!";
     return new OpenCdmMediaengineImpl(session_id.session_id,
                                       session_id.session_id_len);
-  } else {
-    CDM_DLOG() << "Failed to create MediaEngine";
-    return NULL;
-  }
 }
 }  // namespace media
 
