@@ -47,8 +47,8 @@ OCDM_INCLUDES :=  $(OCDM_HEADER_PATH) \
 	         -I $(OCDM_DIR)/com/common/rpc \
 		 -I $(OCDM_DIR)/browser/wpe/opencdm
 
-CXFLAGS := -std=c++11 -g $(OCDM_INCLUDES) -pthread
-CFLAGS := -g $(OCDM_INCLUDES) -pthread
+CXFLAGS := -std=c++11 -g $(OCDM_INCLUDES) -pthread $(CXXFLAGS)
+CFLAGS := -g $(OCDM_INCLUDES) -pthread $(CPPFLAGS)
 
 
 all: ocdm install

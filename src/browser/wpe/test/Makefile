@@ -40,7 +40,7 @@ OCDM_INCLUDES = -I $(OCDM_ROOT_PATH) \
                 -I $(OCDM_WPE_ROOT_PATH)/opencdm \
                 $(OCDM_HEADER_PATH)
 
-CXFLAGS := -std=c++11 -g $(OCDM_INCLUDES) -pthread
+CXFLAGS := -std=c++11 -g $(OCDM_INCLUDES) -pthread $(CXXFLAGS)
 
 all: ocdm_client ocdm_decryptor
 	@echo "Building ocdm client"
