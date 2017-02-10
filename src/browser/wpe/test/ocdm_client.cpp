@@ -47,7 +47,7 @@ int ocdmClient::streamGetLicenseChallenge(void* ocdmDrmStream, std::string chall
   ret = g_pOpenCdm->GetKeyMessage(challenge, challengeLength, licenseURL, urlLength);
 
   if ((!ret) && (!(*urlLength)) && (!(*challengeLength)))
-    cout << "key ready, no need to generate a new license request!" << endl;;
+    cout << "key ready, no need to generate a new license request!" << endl;
   else {
     cout << "license challenge received! length: " << *challengeLength << endl;
     cout << "license challenge url: " << licenseURL << " length: " << *urlLength << endl;
