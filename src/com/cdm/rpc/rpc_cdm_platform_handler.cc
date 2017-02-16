@@ -564,11 +564,16 @@ MediaKeySessionReleaseResponse RpcCdmPlatformHandler::MediaKeySessionRelease(
   rpc_response_generic *rpc_response;
   rpc_request_session_release rpc_param;
 
-  if (com_state == FAULTY) {
+  if (!rpc_client && ((rpc_client = clnt_create(rpc_server_host.c_str(), OPEN_CDM,
+                                OPEN_CDM_EME_5,
+                                "tcp")) == NULL)) {
+    com_state = FAULTY;
+    clnt_pcreateerror(rpc_server_host.c_str());
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG()
-    << "RpcCdmPlatformHandler::MediaKeySessionRelease connection state faulty";
+    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
     return response;
+  } else {
+    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
   }
 
   rpc_param.session_id.session_id_val = session_id_val;
