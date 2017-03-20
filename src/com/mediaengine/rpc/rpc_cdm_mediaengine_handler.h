@@ -18,7 +18,7 @@
 #define MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_COM_MEDIAENGINE_RPC_RPC_CDM_MEDIAENGINE_HANDLER_H_
 
 #include <rpc/rpc.h>
-#include <string>
+#include <cstring>
 
 #include <shmemsem_helper.h>
 #include <open_cdm_mediaengine_com.h>
