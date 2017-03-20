@@ -15,10 +15,12 @@
  */
 
 #include <pthread.h>
-#include <rpc/pmap_clnt.h>
+#include <sys/types.h>
+#include <wchar.h>
 #include <map>
 #include "rpc_cdm_platform_handler.h"
 #include <cdm_logging.h>
+#include <rpc/pmap_clnt.h>
 
 extern "C" {
 #include <opencdm_xdr.h>
