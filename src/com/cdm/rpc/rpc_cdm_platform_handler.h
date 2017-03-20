@@ -17,8 +17,9 @@
 #ifndef MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_COM_CDM_RPC_RPC_CDM_PLATFORM_HANDLER_H_
 #define MEDIA_CDM_PPAPI_EXTERNAL_OPEN_CDM_COM_CDM_RPC_RPC_CDM_PLATFORM_HANDLER_H_
 
+#include <cstring>
+#include <cstdbool>
 #include <rpc/rpc.h>
-#include <string>
 
 #include <open_cdm_platform_common.h>
 #include <open_cdm_platform_com.h>

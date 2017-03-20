@@ -28,7 +28,7 @@ RM := rm  -rf
 PWD = $(shell pwd)
 OCDM_DIR = $(PWD)/../../..
 OCDM_WPE_DIR = $(PWD)/..
-CFLAGS_L := -fPIC -D_REENTRANT -Wall
+CFLAGS_L := -fPIC -D_REENTRANT -Wall $(LDFLAGS)
 
 MODULES   := cdm mediaengine common com/cdm/rpc com/cdm  com/mediaengine/rpc com/common/shmemsem
 OCDM_SOURCES_C =  $(wildcard $(OCDM_DIR)/com/common/rpc/*.c)
