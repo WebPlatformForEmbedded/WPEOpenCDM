@@ -34,7 +34,7 @@ MODULES   := cdm mediaengine common com/cdm/rpc com/cdm  com/mediaengine/rpc com
 OCDM_SOURCES_CC_DIR   := $(addprefix $(OCDM_ROOT_PATH)/,$(MODULES))
 OCDM_HEADER_PATH := $(foreach sdir,$(OCDM_SOURCES_CC_DIR),$(addprefix -I,$(sdir)/))
 
-LD_FLAGS += -L $(OCDM_WPE_ROOT_PATH)/lib -locdm
+LD_FLAGS += -L $(OCDM_WPE_ROOT_PATH)/lib -locdm $(LDFLAGS)
 
 OCDM_INCLUDES = -I $(OCDM_ROOT_PATH) \
                 -I $(OCDM_WPE_ROOT_PATH)/opencdm \
