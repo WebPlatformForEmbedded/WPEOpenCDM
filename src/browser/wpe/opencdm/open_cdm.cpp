@@ -110,6 +110,7 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     char msg[m_message.length()];
     m_message.copy( msg, m_message.length() , 0);
     char test[m_message.length()];
+    CDM_DLOG() << "setting m_eState to KEY_SESSION_WAITING_FOR_LICENSE";
     m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
   }
 
@@ -122,22 +123,36 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
 
 int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg) {
 
-  std::unique_lock<std::mutex> lck(m_mtx);
   CDM_DLOG() << "Update >> invoked from opdm :: estate = " << m_eState << "\n";
 
   int ret = 1;
-
+  CDM_DLOG() << "Start";
+  for(int i = 0; i < cbResponse; i++)
+    cout << pbResponse[i] <<"";
+  CDM_DLOG() << "\nEnd";
   CDM_DLOG() << "Update session with info from server.";
   platform_->MediaKeySessionUpdate((uint8_t*)pbResponse, cbResponse, m_session_id.session_id, m_session_id.session_id_len);
+  CDM_DLOG() << "Update session with info from server complete.";
 
   while (m_eState == KEY_SESSION_WAITING_FOR_LICENSE) {
     CDM_DLOG() << "Waiting for license update status!" << "\n";
+    fflush(stdout);
+    std::unique_lock<std::mutex> lck(m_mtx);
     m_cond_var.wait(lck);
   }
   if (m_eState == KEY_SESSION_UPDATE_LICENSE) {
     ret = 0;
   }
-  responseMsg.assign(m_message.c_str(), m_message.length());
+  else {
+    CDM_DLOG() <<"Got license update status!" << "\n";
+    fflush(stdout);
+    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+      m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
+      responseMsg.assign("request:");
+    }
+  }
+  responseMsg.append(m_message.c_str(), m_message.length());
+  printf("response Message = %s\n", responseMsg.c_str());
   return ret;
 }
 
@@ -203,7 +218,11 @@ void OpenCdm::MessageCallback(OpenCdmPlatformSessionId platform_session_id,
     std::string& message, std::string destination_url) {
 
   CDM_DLOG() << "OpenCdm::MessageCallback:";
-
+  fflush(stdout);
+  CDM_DLOG() << "Start MessageCallback";
+  for(int i = 0; i < message.length(); i++)
+    printf("%2x ",message[i]);
+  CDM_DLOG() << "End MessageCallback";
   std::unique_lock<std::mutex> lck(m_mtx);
   m_message = message;
   m_dest_url = destination_url;
