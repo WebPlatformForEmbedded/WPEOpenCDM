@@ -45,6 +45,8 @@ struct OpenCdmPlatformSessionId {
 
 struct MediaKeysResponse : public PlatformResponse {
 };
+struct MediaKeySetServerCertificateResponse : public PlatformResponse {
+};
 struct MediaKeyTypeResponse : public PlatformResponse {
 };
 struct MediaKeysCreateSessionResponse : public PlatformResponse {

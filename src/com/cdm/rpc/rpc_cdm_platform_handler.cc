@@ -413,6 +413,39 @@ MediaKeyTypeResponse RpcCdmPlatformHandler::IsTypeSupported(const std::string& k
   return response;
 }
 
+MediaKeySetServerCertificateResponse RpcCdmPlatformHandler::MediaKeySetServerCertificate(
+  const uint8_t *pbServerCert, uint32_t cbServerCert) {
+  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySetServerCertificate";
+  fflush(stdout);
+  MediaKeySetServerCertificateResponse response;
+  rpc_response_generic *rpc_response;
+  rpc_request_certificate rpc_param;
+  // rpc not ready
+  if (com_state == FAULTY) {
+    response.platform_response = PLATFORM_CALL_FAIL;
+    CDM_DLOG()
+    << "RpcCdmPlatformHandler::MediaKeySetServerCertificate connection state faulty";
+    return response;
+  }
+  rpc_param.certificate.certificate_val = reinterpret_cast<uint8_t *>(malloc(cbServerCert));
+  memcpy(rpc_param.certificate.certificate_val, pbServerCert, cbServerCert);
+  rpc_param.certificate.certificate_len = cbServerCert;
+  if ((rpc_response = rpc_open_cdm_set_server_certificate_1(
+      &rpc_param, rpc_client)) == NULL) {
+    clnt_perror(rpc_client, rpc_server_host.c_str());
+  }
+  if (rpc_response) {
+    if (rpc_response->platform_val == 0) {
+       CDM_DLOG() << "MediaKeySetServerCertificate success\n ";
+       response.platform_response = PLATFORM_CALL_SUCCESS;
+    } else {
+       CDM_DLOG() << "MediaKeySetServerCertificate failed\n ";
+       response.platform_response = PLATFORM_CALL_FAIL;
+    }
+  }
+  free(rpc_param.certificate.certificate_val);
+  return response;
+}
 
 MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
     const std::string& init_data_type, const uint8_t* init_data,

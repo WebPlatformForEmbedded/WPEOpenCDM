@@ -61,6 +61,16 @@ void OpenCdm::SelectSession(const std::string& session_id_rcvd) {
   m_session_id.session_id_len = (uint32_t)session_id_rcvd.size();
 }
 
+int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
+                                  uint32_t server_certificate_data_size) {
+  MediaKeySetServerCertificateResponse ret = platform_->MediaKeySetServerCertificate((uint8_t*)server_certificate_data, server_certificate_data_size);
+
+  if (ret.platform_response ==  PLATFORM_CALL_SUCCESS )
+    return (true);
+  else
+    return (false);
+}
+
 int OpenCdm::CreateSession(const std::string& mimeType, unsigned char* pbInitData, int cbInitData, std::string& session_id) {
   int ret = 1;
   m_eState = KEY_SESSION_INIT;

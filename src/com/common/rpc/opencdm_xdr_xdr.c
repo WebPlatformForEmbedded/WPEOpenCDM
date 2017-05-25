@@ -31,6 +31,17 @@ xdr_rpc_request_mediakeys (XDR *xdrs, rpc_request_mediakeys *objp)
 }
 
 bool_t
+xdr_rpc_request_certificate (XDR *xdrs, rpc_request_certificate *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_array (xdrs, (char **)&objp->certificate.certificate_val, (u_int *) &objp->certificate.certificate_len, ~0,
+		sizeof (uint8_t), (xdrproc_t) xdr_uint8_t))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
 xdr_rpc_request_callback_info (XDR *xdrs, rpc_request_callback_info *objp)
 {
 	register int32_t *buf;

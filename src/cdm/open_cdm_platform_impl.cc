@@ -68,6 +68,16 @@ MediaKeySessionUpdateResponse OpenCdmPlatformImpl::MediaKeySessionUpdate(
   return response;
 }
 
+MediaKeySetServerCertificateResponse OpenCdmPlatformImpl::MediaKeySetServerCertificate(
+    const uint8_t *pbServerCert, uint32_t cbServerCert) {
+  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeysSetServerCertificate";
+  MediaKeySetServerCertificateResponse response;
+
+  response = com_handler_->MediaKeySetServerCertificate(pbServerCert, cbServerCert);
+
+  return response;
+}
+
 MediaKeySessionReleaseResponse OpenCdmPlatformImpl::MediaKeySessionRelease(
     char *session_id_val, uint32_t session_id_len) {
   CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionRelease";

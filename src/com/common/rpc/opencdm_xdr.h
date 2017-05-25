@@ -34,6 +34,14 @@ struct rpc_request_mediakeys {
 };
 typedef struct rpc_request_mediakeys rpc_request_mediakeys;
 
+struct rpc_request_certificate {
+	struct {
+		u_int certificate_len;
+		uint8_t *certificate_val;
+	} certificate;
+};
+typedef struct rpc_request_certificate rpc_request_certificate;
+
 struct rpc_request_callback_info {
 	struct {
 		u_int hostname_len;
@@ -123,19 +131,22 @@ extern  rpc_response_generic * rpc_open_cdm_is_type_supported_1_svc(rpc_request_
 #define RPC_OPEN_CDM_MEDIAKEYS 2
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1(rpc_request_mediakeys *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1_svc(rpc_request_mediakeys *, struct svc_req *);
-#define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 3
+#define RPC_OPEN_CDM_SET_SERVER_CERTIFICATE 3
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1(rpc_request_certificate *, CLIENT *);
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1_svc(rpc_request_certificate *, struct svc_req *);
+#define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 4
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1(rpc_request_create_session *, CLIENT *);
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1_svc(rpc_request_create_session *, struct svc_req *);
-#define RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION 4
+#define RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION 5
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_load_session_1(rpc_request_load_session *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_load_session_1_svc(rpc_request_load_session *, struct svc_req *);
-#define RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE 5
+#define RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE 6
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_update_1(rpc_request_session_update *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_update_1_svc(rpc_request_session_update *, struct svc_req *);
-#define RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE 6
+#define RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE 7
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_release_1(rpc_request_session_release *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_release_1_svc(rpc_request_session_release *, struct svc_req *);
-#define RPC_OPEN_CDM_MEDIAENGINE 7
+#define RPC_OPEN_CDM_MEDIAENGINE 8
 extern  rpc_response_generic * rpc_open_cdm_mediaengine_1(rpc_request_mediaengine_data *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediaengine_1_svc(rpc_request_mediaengine_data *, struct svc_req *);
 extern int open_cdm_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
@@ -147,19 +158,22 @@ extern  rpc_response_generic * rpc_open_cdm_is_type_supported_1_svc();
 #define RPC_OPEN_CDM_MEDIAKEYS 2
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1();
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1_svc();
-#define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 3
+#define RPC_OPEN_CDM_SET_SERVER_CERTIFICATE 3
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1();
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1_svc();
+#define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 4
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1();
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1_svc();
-#define RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION 4
+#define RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION 5
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_load_session_1();
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_load_session_1_svc();
-#define RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE 5
+#define RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE 6
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_update_1();
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_update_1_svc();
-#define RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE 6
+#define RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE 7
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_release_1();
 extern  rpc_response_generic * rpc_open_cdm_mediakeysession_release_1_svc();
-#define RPC_OPEN_CDM_MEDIAENGINE 7
+#define RPC_OPEN_CDM_MEDIAENGINE 8
 extern  rpc_response_generic * rpc_open_cdm_mediaengine_1();
 extern  rpc_response_generic * rpc_open_cdm_mediaengine_1_svc();
 extern int open_cdm_1_freeresult ();
@@ -170,6 +184,7 @@ extern int open_cdm_1_freeresult ();
 #if defined(__STDC__) || defined(__cplusplus)
 extern  bool_t xdr_rpc_request_is_type_supported (XDR *, rpc_request_is_type_supported*);
 extern  bool_t xdr_rpc_request_mediakeys (XDR *, rpc_request_mediakeys*);
+extern  bool_t xdr_rpc_request_certificate (XDR *, rpc_request_certificate*);
 extern  bool_t xdr_rpc_request_callback_info (XDR *, rpc_request_callback_info*);
 extern  bool_t xdr_rpc_request_create_session (XDR *, rpc_request_create_session*);
 extern  bool_t xdr_rpc_request_load_session (XDR *, rpc_request_load_session*);
@@ -182,6 +197,7 @@ extern  bool_t xdr_rpc_response_create_session (XDR *, rpc_response_create_sessi
 #else /* K&R C */
 extern bool_t xdr_rpc_request_is_type_supported ();
 extern bool_t xdr_rpc_request_mediakeys ();
+extern bool_t xdr_rpc_request_certificate ();
 extern bool_t xdr_rpc_request_callback_info ();
 extern bool_t xdr_rpc_request_create_session ();
 extern bool_t xdr_rpc_request_load_session ();

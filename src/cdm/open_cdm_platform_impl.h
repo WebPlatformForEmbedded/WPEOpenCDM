@@ -48,6 +48,10 @@ class OpenCdmPlatformImpl : public OpenCdmPlatform,
       const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
       uint32_t session_id_len) override;
 
+  // EME equivalent: media_key_.set_server_certificate()
+  MediaKeySetServerCertificateResponse MediaKeySetServerCertificate(
+      const uint8_t *pbServerCert, uint32_t cbServerCert) override;
+
   // EME equivalent: media_key_session_.release()
   MediaKeySessionReleaseResponse MediaKeySessionRelease(
       char *session_id_val, uint32_t session_id_len) override;

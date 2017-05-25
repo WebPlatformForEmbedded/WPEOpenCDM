@@ -39,6 +39,21 @@ rpc_open_cdm_mediakeys_1(rpc_request_mediakeys *argp, CLIENT *clnt)
 	return (&clnt_res);
 }
 
+rpc_response_generic *
+rpc_open_cdm_set_server_certificate_1(rpc_request_certificate *argp, CLIENT *clnt)
+{
+	static rpc_response_generic clnt_res;
+
+	memset((char *)&clnt_res, 0, sizeof(clnt_res));
+	if (clnt_call (clnt, RPC_OPEN_CDM_SET_SERVER_CERTIFICATE,
+		(xdrproc_t) xdr_rpc_request_certificate, (caddr_t) argp,
+		(xdrproc_t) xdr_rpc_response_generic, (caddr_t) &clnt_res,
+		TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
+	}
+	return (&clnt_res);
+}
+
 rpc_response_create_session *
 rpc_open_cdm_mediakeys_create_session_1(rpc_request_create_session *argp, CLIENT *clnt)
 {

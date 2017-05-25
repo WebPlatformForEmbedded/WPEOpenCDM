@@ -57,6 +57,7 @@ public:
 
   int CreateSession(const std::string& ,unsigned char* , int, std::string&);
   int GetKeyMessage(std::string&, int*, unsigned char*, int*);
+  int SetServerCertificate(const uint8_t*, uint32_t);
   int Update(unsigned char*, int, std::string&);
   void SelectKeySystem(const std::string& );
   void SelectSession(const std::string& );
