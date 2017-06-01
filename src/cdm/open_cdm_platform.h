@@ -49,7 +49,11 @@ class OpenCdmPlatform {
   virtual MediaKeySetServerCertificateResponse MediaKeySetServerCertificate(
       const uint8_t *pbServerCert, uint32_t cbServerCert) = 0;
 
-  // EME equivalent: media_key_session_.release()
+  // EME equivalent: media_key_session_.remove()
+  virtual MediaKeySessionRemoveResponse MediaKeySessionRemove(
+      char *session_id_val, uint32_t session_id_len) = 0;
+
+  // EME equivalent: media_key_session_.close()
   virtual MediaKeySessionReleaseResponse MediaKeySessionRelease(
       char *session_id_val, uint32_t session_id_len) = 0;
 

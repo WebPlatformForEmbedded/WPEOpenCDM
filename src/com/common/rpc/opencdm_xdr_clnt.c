@@ -100,6 +100,21 @@ rpc_open_cdm_mediakeysession_update_1(rpc_request_session_update *argp, CLIENT *
 }
 
 rpc_response_generic *
+rpc_open_cdm_mediakeysession_remove_1(rpc_request_session_remove *argp, CLIENT *clnt)
+{
+	static rpc_response_generic clnt_res;
+
+	memset((char *)&clnt_res, 0, sizeof(clnt_res));
+	if (clnt_call (clnt, RPC_OPEN_CDM_MEDIAKEYSESSION_REMOVE,
+		(xdrproc_t) xdr_rpc_request_session_remove, (caddr_t) argp,
+		(xdrproc_t) xdr_rpc_response_generic, (caddr_t) &clnt_res,
+		TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
+	}
+	return (&clnt_res);
+}
+
+rpc_response_generic *
 rpc_open_cdm_mediakeysession_release_1(rpc_request_session_release *argp, CLIENT *clnt)
 {
 	static rpc_response_generic clnt_res;

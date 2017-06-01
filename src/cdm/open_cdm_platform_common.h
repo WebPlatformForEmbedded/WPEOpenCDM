@@ -56,6 +56,8 @@ struct MediaKeysLoadSessionResponse : public PlatformResponse {
 };
 struct MediaKeySessionUpdateResponse : public PlatformResponse {
 };
+struct MediaKeySessionRemoveResponse : public PlatformResponse {
+};
 struct MediaKeySessionReleaseResponse : public PlatformResponse {
 };
 

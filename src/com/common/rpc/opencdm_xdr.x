@@ -41,6 +41,10 @@ struct rpc_request_session_update {
     uint8_t key <>;
 };
 
+struct rpc_request_session_remove {
+    char session_id <>;
+};
+
 struct rpc_request_session_release {
     char session_id <>;
 };
@@ -73,7 +77,8 @@ program OPEN_CDM {
     rpc_response_create_session RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION(rpc_request_create_session) = 4;
     rpc_response_generic RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION(rpc_request_load_session) = 5;
     rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE(rpc_request_session_update) = 6;
-    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE(rpc_request_session_release) = 7;
-    rpc_response_generic RPC_OPEN_CDM_MEDIAENGINE(rpc_request_mediaengine_data) = 8;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_REMOVE(rpc_request_session_remove) = 7;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE(rpc_request_session_release) = 8;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAENGINE(rpc_request_mediaengine_data) = 9;
     } = 1;
 } = 0x61135687; /* FAMEFHG */

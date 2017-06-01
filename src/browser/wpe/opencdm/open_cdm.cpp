@@ -65,7 +65,7 @@ int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
                                   uint32_t server_certificate_data_size) {
   MediaKeySetServerCertificateResponse ret = platform_->MediaKeySetServerCertificate((uint8_t*)server_certificate_data, server_certificate_data_size);
 
-  if (ret.platform_response ==  PLATFORM_CALL_SUCCESS )
+  if (ret.platform_response ==  PLATFORM_CALL_SUCCESS)
     return (true);
   else
     return (false);
@@ -99,7 +99,7 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     unsigned char* licenseURL, int* urlLength) {
 
   std::unique_lock<std::mutex> lck(m_mtx);
-  CDM_DLOG() << "GetKeyMessage >> invoked from opdm :: estate = " << m_eState << "\n";
+  CDM_DLOG() << "GetKeyMessage >> invoked from ocdm :: estate = " << m_eState << "\n";
 
   while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
     CDM_DLOG() << "Waiting for key message!";
@@ -109,7 +109,6 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
   CDM_DLOG() << "Key message should be ready or no need key challenge/message."<< "\n" ;
 
   if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
-    int i = 0;
     char temp[m_message.length()];
 
     m_message.copy(temp,m_message.length(),0);
@@ -119,7 +118,6 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     *urlLength = m_dest_url.length();
     char msg[m_message.length()];
     m_message.copy( msg, m_message.length() , 0);
-    char test[m_message.length()];
     CDM_DLOG() << "setting m_eState to KEY_SESSION_WAITING_FOR_LICENSE";
     m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
   }
@@ -131,9 +129,41 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
   return 0;
 }
 
+int OpenCdm::Load(std::string& responseMsg) {
+  int ret = 1;
+  CDM_DLOG() << "Load >> invoked from ocdm :: estate = " << m_eState << "\n";
+  CDM_DLOG() << "Load session with info exisiting key.";
+
+  MediaKeysLoadSessionResponse status = platform_->MediaKeysLoadSession(m_session_id.session_id, m_session_id.session_id_len);
+  if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
+    ret = 0;
+    CDM_DLOG() << "Load session with info exisiting key complete.";
+
+    while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
+      CDM_DLOG() << "Waiting for load message!";
+      std::unique_lock<std::mutex> lck(m_mtx);
+      m_cond_var.wait(lck);
+    }
+
+    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+      CDM_DLOG() << "setting m_eState to KEY_SESSION_LOADED";
+      m_eState = KEY_SESSION_LOADED; //TODO : tobe rechecked and updated
+      responseMsg.assign("message:");
+    }
+  } else {
+    while (m_eState == KEY_SESSION_ERROR) {
+      CDM_DLOG() << "Waiting for load status!";
+      std::unique_lock<std::mutex> lck(m_mtx);
+      m_cond_var.wait(lck);
+    }
+  }
+  responseMsg.append(m_message.c_str(), m_message.length());
+  return ret;
+}
+
 int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg) {
 
-  CDM_DLOG() << "Update >> invoked from opdm :: estate = " << m_eState << "\n";
+  CDM_DLOG() << "Update >> invoked from ocdm :: estate = " << m_eState << "\n";
 
   int ret = 1;
   CDM_DLOG() << "Start";
@@ -158,12 +188,59 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
     fflush(stdout);
     if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
       m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
-      responseMsg.assign("request:");
+      responseMsg.assign("message:");
     }
   }
   responseMsg.append(m_message.c_str(), m_message.length());
   printf("response Message = %s\n", responseMsg.c_str());
   return ret;
+}
+
+int OpenCdm::Remove(std::string& responseMsg) {
+  CDM_DLOG() << "Remove >> invoked from ocdm :: estate = " << m_eState << "\n";
+  int ret = 1;
+  CDM_DLOG() << "\nEnd";
+  CDM_DLOG() << "Remove session with info exisiting key.";
+
+  MediaKeySessionRemoveResponse status = platform_->MediaKeySessionRemove(m_session_id.session_id, m_session_id.session_id_len);
+  if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
+    ret = 0;
+    CDM_DLOG() << "Remove session with info exisiting key complete.";
+
+    while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
+      CDM_DLOG() << "Waiting for remove message!";
+      std::unique_lock<std::mutex> lck(m_mtx);
+      m_cond_var.wait(lck);
+    }
+
+    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+      CDM_DLOG() << "setting m_eState to KEY_SESSION_REMOVED";
+      m_eState = KEY_SESSION_REMOVED; //TODO : tobe rechecked and updated
+      responseMsg.assign("message:");
+    }
+  } else {
+    while (m_eState == KEY_SESSION_ERROR) {
+      CDM_DLOG() << "Waiting for remove status!";
+      std::unique_lock<std::mutex> lck(m_mtx);
+      m_cond_var.wait(lck);
+    }
+  }
+  responseMsg.append(m_message.c_str(), m_message.length());
+  return ret;
+}
+
+int OpenCdm::Close() {
+  CDM_DLOG() << "Close >> invoked from ocdm :: estate = " << m_eState << "\n";
+  CDM_DLOG() << "\nEnd";
+  CDM_DLOG() << "Close session with info exisiting key.";
+  MediaKeySessionReleaseResponse status = platform_->MediaKeySessionRelease(m_session_id.session_id, m_session_id.session_id_len);
+  CDM_DLOG() << "Close session with info exisiting key complete.";
+  if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
+    m_eState = KEY_SESSION_CLOSED;
+    return (true);
+  }
+  else
+    return (false);
 }
 
 int OpenCdm::ReleaseMem() {
@@ -220,8 +297,11 @@ void OpenCdm::ReadyCallback(OpenCdmPlatformSessionId platform_session_id) {
 
 void OpenCdm::ErrorCallback(OpenCdmPlatformSessionId platform_session_id,
     uint32_t sys_err, std::string err_msg) {
-
   CDM_DLOG() << "OpenCdm::ErrorCallback";
+  std::unique_lock<std::mutex> lck(m_mtx);
+  m_message = err_msg;
+  m_eState = KEY_SESSION_ERROR;
+  m_cond_var.notify_all();
 }
 
 void OpenCdm::MessageCallback(OpenCdmPlatformSessionId platform_session_id,

@@ -57,7 +57,11 @@ class RpcCdmPlatformHandler : public OpenCdmPlatformCom {
   MediaKeySetServerCertificateResponse MediaKeySetServerCertificate(
       const uint8_t *pbServerCert, uint32_t cbServerCert) override;
 
-  // EME equivalent: media_key_session_.release()
+  // EME equivalent: media_key_session_.remove()
+  MediaKeySessionRemoveResponse MediaKeySessionRemove(
+      char *session_id_val, uint32_t session_id_len) override;
+
+  // EME equivalent: media_key_session_.close()
   MediaKeySessionReleaseResponse MediaKeySessionRelease(
       char *session_id_val, uint32_t session_id_len) override;
 

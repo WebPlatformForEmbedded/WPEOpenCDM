@@ -591,6 +591,46 @@ MediaKeySessionUpdateResponse RpcCdmPlatformHandler::MediaKeySessionUpdate(
   return response;
 }
 
+MediaKeySessionRemoveResponse RpcCdmPlatformHandler::MediaKeySessionRemove(
+    char *session_id_val, uint32_t session_id_len) {
+  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionRemove";
+  MediaKeySessionRemoveResponse response;
+
+  rpc_response_generic *rpc_response;
+  rpc_request_session_remove rpc_param;
+
+  if (!rpc_client && ((rpc_client = clnt_create(rpc_server_host.c_str(), OPEN_CDM,
+                                OPEN_CDM_EME_5,
+                                "tcp")) == NULL)) {
+    com_state = FAULTY;
+    clnt_pcreateerror(rpc_server_host.c_str());
+    response.platform_response = PLATFORM_CALL_FAIL;
+    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
+    return response;
+  } else {
+    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
+  }
+
+  rpc_param.session_id.session_id_val = session_id_val;
+  rpc_param.session_id.session_id_len = session_id_len;
+
+  if ((rpc_response = rpc_open_cdm_mediakeysession_remove_1(&rpc_param,
+                                                             rpc_client))
+      == NULL) {
+    clnt_perror(rpc_client, rpc_server_host.c_str());
+  }
+
+  if (rpc_response->platform_val == 0) {
+    CDM_DLOG() << "MediaKeySessionRemove success\n ";
+    response.platform_response = PLATFORM_CALL_SUCCESS;
+  } else {
+    CDM_DLOG() << "MediaKeySessionRemove failed\n ";
+    response.platform_response = PLATFORM_CALL_FAIL;
+  }
+
+  return response;
+}
+
 MediaKeySessionReleaseResponse RpcCdmPlatformHandler::MediaKeySessionRelease(
     char *session_id_val, uint32_t session_id_len) {
   CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionRelease";

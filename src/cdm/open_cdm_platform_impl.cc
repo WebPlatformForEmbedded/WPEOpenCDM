@@ -78,6 +78,17 @@ MediaKeySetServerCertificateResponse OpenCdmPlatformImpl::MediaKeySetServerCerti
   return response;
 }
 
+MediaKeySessionRemoveResponse OpenCdmPlatformImpl::MediaKeySessionRemove(
+    char *session_id_val, uint32_t session_id_len) {
+  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionRemove";
+  MediaKeySessionRemoveResponse response;
+
+  response = com_handler_->MediaKeySessionRemove(session_id_val,
+                                                  session_id_len);
+
+  return response;
+}
+
 MediaKeySessionReleaseResponse OpenCdmPlatformImpl::MediaKeySessionRelease(
     char *session_id_val, uint32_t session_id_len) {
   CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionRelease";

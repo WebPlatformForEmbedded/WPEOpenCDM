@@ -48,7 +48,9 @@ private:
     KEY_SESSION_UPDATE_LICENSE = 4,
     KEY_SESSION_READY = 5,
     KEY_SESSION_ERROR = 6,
-    KEY_SESSION_CLOSED = 7
+    KEY_SESSION_LOADED = 7,
+    KEY_SESSION_REMOVED = 8,
+    KEY_SESSION_CLOSED = 9
   };
 
 public:
@@ -58,7 +60,10 @@ public:
   int CreateSession(const std::string& ,unsigned char* , int, std::string&);
   int GetKeyMessage(std::string&, int*, unsigned char*, int*);
   int SetServerCertificate(const uint8_t*, uint32_t);
+  int Load(std::string&);
   int Update(unsigned char*, int, std::string&);
+  int Remove(std::string&);
+  int Close();
   void SelectKeySystem(const std::string& );
   void SelectSession(const std::string& );
   bool IsTypeSupported(const  std::string& keySystem,const  std::string& mimeType);
