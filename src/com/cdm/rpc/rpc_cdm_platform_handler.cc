@@ -435,7 +435,7 @@ MediaKeySetServerCertificateResponse RpcCdmPlatformHandler::MediaKeySetServerCer
   rpc_param.certificate.certificate_val = reinterpret_cast<uint8_t *>(malloc(cbServerCert));
   memcpy(rpc_param.certificate.certificate_val, pbServerCert, cbServerCert);
   rpc_param.certificate.certificate_len = cbServerCert;
-  if ((rpc_response = rpc_open_cdm_set_server_certificate_1(
+  if ((rpc_response = rpc_open_cdm_mediakeys_set_server_certificate_1(
       &rpc_param, rpc_client)) == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
   }
@@ -520,35 +520,35 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
   return response;
 }
 
-MediaKeysLoadSessionResponse RpcCdmPlatformHandler::MediaKeysLoadSession(
+MediaKeySessionLoadResponse RpcCdmPlatformHandler::MediaKeySessionLoad(
     char *session_id_val, uint32_t session_id_len) {
-  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeysLoadSession";
-  MediaKeysLoadSessionResponse response;
+  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionLoad";
+  MediaKeySessionLoadResponse response;
 
   rpc_response_generic *rpc_response;
-  rpc_request_load_session rpc_param;
+  rpc_request_session_load rpc_param;
 
   // rpc not ready
   if (com_state == FAULTY) {
     response.platform_response = PLATFORM_CALL_FAIL;
     CDM_DLOG()
-    << "RpcCdmPlatformHandler::MediaKeysLoadSession connection state faulty";
+    << "RpcCdmPlatformHandler::MediaKeySessionLoad connection state faulty";
     return response;
   }
 
   rpc_param.session_id.session_id_val = session_id_val;
   rpc_param.session_id.session_id_len = session_id_len;
 
-  if ((rpc_response = rpc_open_cdm_mediakeys_load_session_1(
+  if ((rpc_response = rpc_open_cdm_mediakeysession_load_1(
       &rpc_param, rpc_client)) == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
   }
 
   if (rpc_response->platform_val == 0) {
-    CDM_DLOG() << "MediaKeysLoadSession success\n ";
+    CDM_DLOG() << "MediaKeySessionLoad success\n ";
     response.platform_response = PLATFORM_CALL_SUCCESS;
   } else {
-    CDM_DLOG() << "MediaKeysLoadSession failed\n ";
+    CDM_DLOG() << "MediaKeySessionLoad failed\n ";
     response.platform_response = PLATFORM_CALL_FAIL;
   }
 
@@ -628,6 +628,46 @@ MediaKeySessionRemoveResponse RpcCdmPlatformHandler::MediaKeySessionRemove(
     response.platform_response = PLATFORM_CALL_SUCCESS;
   } else {
     CDM_DLOG() << "MediaKeySessionRemove failed\n ";
+    response.platform_response = PLATFORM_CALL_FAIL;
+  }
+
+  return response;
+}
+
+MediaKeySessionCloseResponse RpcCdmPlatformHandler::MediaKeySessionClose(
+    char *session_id_val, uint32_t session_id_len) {
+  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionClose";
+  MediaKeySessionCloseResponse response;
+
+  rpc_response_generic *rpc_response;
+  rpc_request_session_close rpc_param;
+
+  if (!rpc_client && ((rpc_client = clnt_create(rpc_server_host.c_str(), OPEN_CDM,
+                                                OPEN_CDM_EME_5,
+                                                "tcp")) == NULL)) {
+    com_state = FAULTY;
+    clnt_pcreateerror(rpc_server_host.c_str());
+    response.platform_response = PLATFORM_CALL_FAIL;
+    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
+    return response;
+  } else {
+    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
+  }
+
+  rpc_param.session_id.session_id_val = session_id_val;
+  rpc_param.session_id.session_id_len = session_id_len;
+
+  if ((rpc_response = rpc_open_cdm_mediakeysession_close_1(&rpc_param,
+                                                           rpc_client))
+      == NULL) {
+    clnt_perror(rpc_client, rpc_server_host.c_str());
+  }
+
+  if (rpc_response->platform_val == 0) {
+    CDM_DLOG() << "MediaKeySessionClose success\n ";
+    response.platform_response = PLATFORM_CALL_SUCCESS;
+  } else {
+    CDM_DLOG() << "MediaKeySessionClose failed\n ";
     response.platform_response = PLATFORM_CALL_FAIL;
   }
 

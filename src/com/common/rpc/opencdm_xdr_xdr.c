@@ -73,7 +73,7 @@ xdr_rpc_request_create_session (XDR *xdrs, rpc_request_create_session *objp)
 }
 
 bool_t
-xdr_rpc_request_load_session (XDR *xdrs, rpc_request_load_session *objp)
+xdr_rpc_request_session_load (XDR *xdrs, rpc_request_session_load *objp)
 {
 	register int32_t *buf;
 
@@ -99,6 +99,17 @@ xdr_rpc_request_session_update (XDR *xdrs, rpc_request_session_update *objp)
 
 bool_t
 xdr_rpc_request_session_remove (XDR *xdrs, rpc_request_session_remove *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_array (xdrs, (char **)&objp->session_id.session_id_val, (u_int *) &objp->session_id.session_id_len, ~0,
+		sizeof (char), (xdrproc_t) xdr_char))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_rpc_request_session_close (XDR *xdrs, rpc_request_session_close *objp)
 {
 	register int32_t *buf;
 

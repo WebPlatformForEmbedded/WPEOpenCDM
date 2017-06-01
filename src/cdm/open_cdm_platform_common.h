@@ -52,11 +52,13 @@ struct MediaKeyTypeResponse : public PlatformResponse {
 struct MediaKeysCreateSessionResponse : public PlatformResponse {
   OpenCdmPlatformSessionId session_id;
 };
-struct MediaKeysLoadSessionResponse : public PlatformResponse {
+struct MediaKeySessionLoadResponse : public PlatformResponse {
 };
 struct MediaKeySessionUpdateResponse : public PlatformResponse {
 };
 struct MediaKeySessionRemoveResponse : public PlatformResponse {
+};
+struct MediaKeySessionCloseResponse : public PlatformResponse {
 };
 struct MediaKeySessionReleaseResponse : public PlatformResponse {
 };

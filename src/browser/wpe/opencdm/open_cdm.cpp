@@ -130,7 +130,7 @@ int OpenCdm::Load(std::string& responseMsg) {
   CDM_DLOG() << "Load >> invoked from ocdm :: estate = " << m_eState << "\n";
   CDM_DLOG() << "Load session with info exisiting key.";
   
-  MediaKeysLoadSessionResponse status = platform_->MediaKeysLoadSession(m_session_id.session_id, m_session_id.session_id_len);
+  MediaKeySessionLoadResponse status = platform_->MediaKeySessionLoad(m_session_id.session_id, m_session_id.session_id_len);
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
     ret = 0;
     CDM_DLOG() << "Load session with info exisiting key complete.";
@@ -222,9 +222,9 @@ int OpenCdm::Remove(std::string& responseMsg) {
 int OpenCdm::Close() {
   CDM_DLOG() << "Close >> invoked from ocdm :: estate = " << m_eState << "\n";
   CDM_DLOG() << "\nEnd";
-  CDM_DLOG() << "Close session with info exisiting key.";
-  MediaKeySessionReleaseResponse status = platform_->MediaKeySessionRelease(m_session_id.session_id, m_session_id.session_id_len);
-  CDM_DLOG() << "Close session with info exisiting key complete.";
+  CDM_DLOG() << "Close session with info existing key.";
+  MediaKeySessionCloseResponse status = platform_->MediaKeySessionClose(m_session_id.session_id, m_session_id.session_id_len);
+  CDM_DLOG() << "Close session with info existing key complete.";
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
     m_eState = KEY_SESSION_CLOSED;
     return (true);
