@@ -133,12 +133,12 @@ int OpenCdm::Load(std::string& responseMsg) {
   int ret = 1;
   CDM_DLOG() << "Load >> invoked from ocdm :: estate = " << m_eState << "\n";
   CDM_DLOG() << "Load session with info exisiting key.";
-
+  
   MediaKeysLoadSessionResponse status = platform_->MediaKeysLoadSession(m_session_id.session_id, m_session_id.session_id_len);
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
     ret = 0;
     CDM_DLOG() << "Load session with info exisiting key complete.";
-
+  
     while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
       CDM_DLOG() << "Waiting for load message!";
       std::unique_lock<std::mutex> lck(m_mtx);
@@ -201,12 +201,12 @@ int OpenCdm::Remove(std::string& responseMsg) {
   int ret = 1;
   CDM_DLOG() << "\nEnd";
   CDM_DLOG() << "Remove session with info exisiting key.";
-
+  
   MediaKeySessionRemoveResponse status = platform_->MediaKeySessionRemove(m_session_id.session_id, m_session_id.session_id_len);
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
     ret = 0;
     CDM_DLOG() << "Remove session with info exisiting key complete.";
-
+  
     while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
       CDM_DLOG() << "Waiting for remove message!";
       std::unique_lock<std::mutex> lck(m_mtx);

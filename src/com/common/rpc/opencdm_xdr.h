@@ -140,8 +140,8 @@ extern  rpc_response_generic * rpc_open_cdm_is_type_supported_1_svc(rpc_request_
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1(rpc_request_mediakeys *, CLIENT *);
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1_svc(rpc_request_mediakeys *, struct svc_req *);
 #define RPC_OPEN_CDM_SET_SERVER_CERTIFICATE 3
-extern  rpc_response_generic * rpc_open_cdm_mediakeys_set_server_certificate_1(rpc_request_certificate *, CLIENT *);
-extern  rpc_response_generic * rpc_open_cdm_mediakeys_set_server_certificate_1_svc(rpc_request_certificate *, struct svc_req *);
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1(rpc_request_certificate *, CLIENT *);
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1_svc(rpc_request_certificate *, struct svc_req *);
 #define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 4
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1(rpc_request_create_session *, CLIENT *);
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1_svc(rpc_request_create_session *, struct svc_req *);
@@ -170,8 +170,8 @@ extern  rpc_response_generic * rpc_open_cdm_is_type_supported_1_svc();
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1();
 extern  rpc_response_generic * rpc_open_cdm_mediakeys_1_svc();
 #define RPC_OPEN_CDM_SET_SERVER_CERTIFICATE 3
-extern  rpc_response_generic * rpc_open_cdm_mediakeys_set_server_certificate_1();
-extern  rpc_response_generic * rpc_open_cdm_mediakeys_set_server_certificate_1_svc();
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1();
+extern  rpc_response_generic * rpc_open_cdm_set_server_certificate_1_svc();
 #define RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION 4
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1();
 extern  rpc_response_create_session * rpc_open_cdm_mediakeys_create_session_1_svc();

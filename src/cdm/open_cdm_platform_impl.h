@@ -59,7 +59,7 @@ class OpenCdmPlatformImpl : public OpenCdmPlatform,
   // EME equivalent: media_key_session_.close()
   MediaKeySessionReleaseResponse MediaKeySessionRelease(
       char *session_id_val, uint32_t session_id_len) override;
-
+    
   //EME equivalent : media_key_.isTypeSupported()
   MediaKeyTypeResponse IsTypeSupported(const std::string&,
                                             const std::string&) override;
