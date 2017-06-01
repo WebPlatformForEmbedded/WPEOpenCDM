@@ -1,4 +1,20 @@
 /*
+ * Copyright 2014 Fraunhofer FOKUS
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * OpenCDM XDR to be used for RPC communication between CDM and DRM platform counterpart
  * Based on EME methods and naming.
  */
@@ -32,7 +48,7 @@ struct rpc_request_create_session {
     rpc_request_callback_info callback_info;
 };
 
-struct rpc_request_load_session {
+struct rpc_request_session_load {
     char session_id <>;
 };
 
@@ -42,6 +58,10 @@ struct rpc_request_session_update {
 };
 
 struct rpc_request_session_remove {
+    char session_id <>;
+};
+
+struct rpc_request_session_close {
     char session_id <>;
 };
 
@@ -73,12 +93,13 @@ program OPEN_CDM {
     version OPEN_CDM_EME_5 {
     rpc_response_generic RPC_OPEN_CDM_IS_TYPE_SUPPORTED(rpc_request_is_type_supported) = 1;
     rpc_response_generic RPC_OPEN_CDM_MEDIAKEYS(rpc_request_mediakeys) = 2;
-    rpc_response_generic RPC_OPEN_CDM_SET_SERVER_CERTIFICATE(rpc_request_certificate) = 3;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYS_SET_SERVER_CERTIFICATE(rpc_request_certificate) = 3;
     rpc_response_create_session RPC_OPEN_CDM_MEDIAKEYS_CREATE_SESSION(rpc_request_create_session) = 4;
-    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYS_LOAD_SESSION(rpc_request_load_session) = 5;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_LOAD(rpc_request_session_load) = 5;
     rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_UPDATE(rpc_request_session_update) = 6;
     rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_REMOVE(rpc_request_session_remove) = 7;
-    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE(rpc_request_session_release) = 8;
-    rpc_response_generic RPC_OPEN_CDM_MEDIAENGINE(rpc_request_mediaengine_data) = 9;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_CLOSE(rpc_request_session_close) = 8;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAKEYSESSION_RELEASE(rpc_request_session_release) = 9;
+    rpc_response_generic RPC_OPEN_CDM_MEDIAENGINE(rpc_request_mediaengine_data) = 10;
     } = 1;
 } = 0x61135687; /* FAMEFHG */

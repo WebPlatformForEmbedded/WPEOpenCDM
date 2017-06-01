@@ -46,12 +46,12 @@ MediaKeysCreateSessionResponse OpenCdmPlatformImpl::MediaKeysCreateSession(
   return response;
 }
 
-MediaKeysLoadSessionResponse OpenCdmPlatformImpl::MediaKeysLoadSession(
+MediaKeySessionLoadResponse OpenCdmPlatformImpl::MediaKeySessionLoad(
     char *session_id_val, uint32_t session_id_len) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeysLoadSession";
-  MediaKeysLoadSessionResponse response;
+  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionLoad";
+  MediaKeySessionLoadResponse response;
 
-  response = com_handler_->MediaKeysLoadSession(session_id_val, session_id_len);
+  response = com_handler_->MediaKeySessionLoad(session_id_val, session_id_len);
 
   return response;
 }
@@ -84,6 +84,17 @@ MediaKeySessionRemoveResponse OpenCdmPlatformImpl::MediaKeySessionRemove(
   MediaKeySessionRemoveResponse response;
 
   response = com_handler_->MediaKeySessionRemove(session_id_val,
+                                                  session_id_len);
+
+  return response;
+}
+
+MediaKeySessionCloseResponse OpenCdmPlatformImpl::MediaKeySessionClose(
+    char *session_id_val, uint32_t session_id_len) {
+  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionClose";
+  MediaKeySessionCloseResponse response;
+
+  response = com_handler_->MediaKeySessionClose(session_id_val,
                                                   session_id_len);
 
   return response;
