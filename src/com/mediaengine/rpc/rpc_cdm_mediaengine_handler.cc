@@ -124,7 +124,7 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
                                                   const uint8_t *pbData,
                                                   uint32_t cbData, uint8_t *out,
                                                   uint32_t &out_size) {
-  CDM_DLOG() << "RpcCdmMediaengineHandler::Decrypt: ";
+  CDM_DLOG() << "###RpcCdmMediaengineHandler::Decrypt: " << cbIv;
   DecryptResponse response;
   response.platform_response = PLATFORM_CALL_SUCCESS;
   response.sys_err = 0;

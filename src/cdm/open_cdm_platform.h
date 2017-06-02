@@ -33,8 +33,8 @@ class OpenCdmPlatform {
 
   // EME equivalent: media_keys_.createSession()
   virtual MediaKeysCreateSessionResponse MediaKeysCreateSession(
-      const std::string& init_data_type, const uint8_t* init_data,
-      int init_data_length) = 0;
+      int license_type, const std::string& init_data_type,
+      const uint8_t* init_data, int init_data_length) = 0;
 
   // EME equivalent: media_keys_.loadSession()
   virtual MediaKeySessionLoadResponse MediaKeySessionLoad(

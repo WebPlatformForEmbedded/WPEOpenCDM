@@ -41,8 +41,8 @@ class RpcCdmPlatformHandler : public OpenCdmPlatformCom {
                                             const std::string&) override;
   // EME equivalent: media_keys_.createSession()
   MediaKeysCreateSessionResponse MediaKeysCreateSession(
-      const std::string& init_data_type, const uint8_t* init_data,
-      int init_data_length) override;
+      int license_type, const std::string& init_data_type,
+      const uint8_t* init_data, int init_data_length) override;
 
   // EME equivalent: media_keys_.loadSession()
    MediaKeySessionLoadResponse  MediaKeySessionLoad(

@@ -71,12 +71,12 @@ int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
     return (false);
 }
 
-int OpenCdm::CreateSession(const std::string& mimeType, unsigned char* pbInitData, int cbInitData, std::string& session_id) {
+int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id) {
   int ret = 1;
   m_eState = KEY_SESSION_INIT;
   CDM_DLOG() << " Enter : CreateSession";
-
-  MediaKeysCreateSessionResponse response = platform_->MediaKeysCreateSession(mimeType, pbInitData, cbInitData);
+  int licenseType = 0; //FIXME update interface of this function with licenseType
+  MediaKeysCreateSessionResponse response = platform_->MediaKeysCreateSession(licenseType, initDataType, pbInitData, cbInitData);
   CDM_DLOG() << "Contin : CreateSession ";
   if (response.platform_response == PLATFORM_CALL_SUCCESS) {
     CDM_DLOG() << "New Session created";

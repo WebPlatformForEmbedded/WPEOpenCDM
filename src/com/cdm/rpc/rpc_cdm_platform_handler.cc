@@ -448,7 +448,7 @@ MediaKeySetServerCertificateResponse RpcCdmPlatformHandler::MediaKeySetServerCer
 }
 
 MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
-    const std::string& init_data_type, const uint8_t* init_data,
+    int license_type, const std::string& init_data_type, const uint8_t* init_data,
     int init_data_length) {
   CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeysCreateSession";
   MediaKeysCreateSessionResponse response;
@@ -463,6 +463,7 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
   rpc_response_create_session *rpc_response;
   rpc_request_create_session rpc_param;
 
+  rpc_param.license_type = license_type;
   rpc_param.init_data_type.init_data_type_val = reinterpret_cast<char *>(malloc(
       init_data_type.size()));
   memcpy(rpc_param.init_data_type.init_data_type_val, init_data_type.c_str(),
