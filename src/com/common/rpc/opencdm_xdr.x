@@ -43,6 +43,7 @@ struct rpc_request_callback_info {
 };
 
 struct rpc_request_create_session {
+    int32_t license_type;
     char init_data_type <>;
     uint8_t init_data <>;
     rpc_request_callback_info callback_info;

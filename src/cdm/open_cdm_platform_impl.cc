@@ -33,11 +33,11 @@ MediaKeysResponse OpenCdmPlatformImpl::MediaKeys(std::string key_system) {
 }
 
 MediaKeysCreateSessionResponse OpenCdmPlatformImpl::MediaKeysCreateSession(
-    const std::string& init_data_type, const uint8_t* init_data,
-    int init_data_length) {
+    int license_type, const std::string& init_data_type,
+    const uint8_t* init_data, int init_data_length) {
   MediaKeysCreateSessionResponse response;
 
-  response = com_handler_->MediaKeysCreateSession(init_data_type, init_data,
+  response = com_handler_->MediaKeysCreateSession(license_type, init_data_type, init_data,
                                                   init_data_length);
 
   return response;

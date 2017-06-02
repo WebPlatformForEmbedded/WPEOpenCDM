@@ -61,6 +61,8 @@ xdr_rpc_request_create_session (XDR *xdrs, rpc_request_create_session *objp)
 {
 	register int32_t *buf;
 
+	 if (!xdr_int32_t (xdrs, &objp->license_type))
+		 return FALSE;
 	 if (!xdr_array (xdrs, (char **)&objp->init_data_type.init_data_type_val, (u_int *) &objp->init_data_type.init_data_type_len, ~0,
 		sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;
