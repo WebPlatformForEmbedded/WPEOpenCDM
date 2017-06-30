@@ -69,13 +69,12 @@ int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
   return ret.platform_response ==  PLATFORM_CALL_SUCCESS;
 }
 
-int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id) {
+int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id, int licenseType) {
   // FIXME: Now we're back to integer return types that don't follow the normal true/false
   // pattern. The point of this code is to instil fear in your heart.
   int ret = 1;
   m_eState = KEY_SESSION_INIT;
 
-  int licenseType = 0; // FIXME: Update interface of this function with licenseType.
   auto response = platform_->MediaKeysCreateSession(licenseType, initDataType, pbInitData, cbInitData);
   if (response.platform_response == PLATFORM_CALL_SUCCESS) {
     CDM_LOG_LINE("new session created");

@@ -29,7 +29,7 @@ int ocdmClient::clientCreateSession(void** ocdmDrmStream, unsigned char* pbInitD
   g_pOpenCdm->IsTypeSupported(open_cdm_key_system,"");
   CDM_DLOG() << "IsTypeSupported #2#";
   g_pOpenCdm->IsTypeSupported("",mimeType);
-  ret = g_pOpenCdm->CreateSession(mimeType,pbInitData, cbInitData, s_id);
+  ret = g_pOpenCdm->CreateSession(mimeType,pbInitData, cbInitData, s_id, 0);
   CDM_DLOG() << "s_id received from OpenCdm->CreateSession : " << s_id;
   *ocdmDrmStream = (void*) g_pOpenCdm;
   return ret;
