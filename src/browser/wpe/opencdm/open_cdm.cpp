@@ -174,7 +174,7 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
   m_cond_var.wait(lck, [=]() { return m_eState != KEY_SESSION_WAITING_FOR_LICENSE; });
   CDM_LOG_LINE("received a lience update, state is now %s", sessionStateToString(m_eState));
 
-  if (m_eState == KEY_SESSION_UPDATE_LICENSE)
+  if (m_eState == KEY_SESSION_UPDATE_LICENSE || m_eState == KEY_SESSION_REMOVED)
     ret = 0;
   else if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
     responseMsg.assign("message:");
@@ -191,29 +191,31 @@ int OpenCdm::Remove(std::string& responseMsg) {
   int ret = 1;
   CDM_DLOG() << "\nEnd";
   CDM_DLOG() << "Remove session with info exisiting key.";
-  
+
+  m_eState = KEY_SESSION_WAITING_FOR_LICENSE_REMOVAL;
   MediaKeySessionRemoveResponse status = platform_->MediaKeySessionRemove(m_session_id.session_id, m_session_id.session_id_len);
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
-    ret = 0;
     CDM_DLOG() << "Remove session with info exisiting key complete.";
   
-    while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
+    while (m_eState == KEY_SESSION_WAITING_FOR_LICENSE_REMOVAL) {
       CDM_DLOG() << "Waiting for remove message!";
       std::unique_lock<std::mutex> lck(m_mtx);
       m_cond_var.wait(lck);
     }
 
-    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
-      CDM_DLOG() << "setting m_eState to KEY_SESSION_REMOVED";
-      m_eState = KEY_SESSION_REMOVED; //TODO : tobe rechecked and updated
-      responseMsg.assign("message:");
-    }
-  } else {
-    while (m_eState == KEY_SESSION_ERROR) {
-      CDM_DLOG() << "Waiting for remove status!";
-      std::unique_lock<std::mutex> lck(m_mtx);
-      m_cond_var.wait(lck);
-    }
+    if (m_eState == KEY_SESSION_REMOVED || m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+        while (m_eState == KEY_SESSION_REMOVED) {
+           CDM_DLOG() << "Waiting for remove message!";
+           std::unique_lock<std::mutex> lck(m_mtx);
+           m_cond_var.wait(lck);
+        }
+        if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+           ret = 0;
+           CDM_DLOG() << "setting m_eState to KEY_SESSION_REMOVED";
+           m_eState = KEY_SESSION_REMOVED; // TODO: To be rechecked and updated.
+           responseMsg.assign("message:");
+      }
+   }
   }
   responseMsg.append(m_message.c_str(), m_message.length());
   return ret;
@@ -315,6 +317,8 @@ void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId, std::string me
   std::string expectedMsg = "KeyUsable";
   if (message == expectedMsg)
     m_eState = KEY_SESSION_UPDATE_LICENSE;
+  else if (message == "KeyReleased")
+    m_eState = KEY_SESSION_REMOVED;
   else
     m_eState = KEY_SESSION_ERROR;
   m_message = message;
