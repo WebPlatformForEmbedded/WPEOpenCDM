@@ -226,6 +226,7 @@ int OpenCdm::Remove(std::string& responseMsg) {
    }
   }
   responseMsg.append(m_message.c_str(), m_message.length());
+  printf("response Message = %s\n", responseMsg.c_str());fflush(stdout);
   return ret;
 }
 
