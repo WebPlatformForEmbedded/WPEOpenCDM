@@ -234,7 +234,10 @@ int OpenCdm::Close() {
 }
 
 int OpenCdm::ReleaseMem() {
-  return media_engine_->ReleaseMem();
+  if(media_engine_)
+     return media_engine_->ReleaseMem();
+
+  return 0;
 }
 
 int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength, unsigned char* ivData, uint32_t ivDataLength) {
