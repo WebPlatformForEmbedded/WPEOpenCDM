@@ -130,27 +130,34 @@ int OpenCdm::Load(std::string& responseMsg) {
   CDM_DLOG() << "Load >> invoked from ocdm :: estate = " << m_eState << "\n";
   CDM_DLOG() << "Load session with info exisiting key.";
   
+  m_eState = KEY_SESSION_WAITING_FOR_LOAD_SESSION;
   MediaKeySessionLoadResponse status = platform_->MediaKeySessionLoad(m_session_id.session_id, m_session_id.session_id_len);
   if (status.platform_response ==  PLATFORM_CALL_SUCCESS) {
-    ret = 0;
     CDM_DLOG() << "Load session with info exisiting key complete.";
-  
-    while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
-      CDM_DLOG() << "Waiting for load message!";
-      std::unique_lock<std::mutex> lck(m_mtx);
-      m_cond_var.wait(lck);
-    }
 
-    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
-      CDM_DLOG() << "setting m_eState to KEY_SESSION_LOADED";
-      m_eState = KEY_SESSION_LOADED; //TODO : tobe rechecked and updated
-      responseMsg.assign("message:");
-    }
-  } else {
-    while (m_eState == KEY_SESSION_ERROR) {
-      CDM_DLOG() << "Waiting for load status!";
-      std::unique_lock<std::mutex> lck(m_mtx);
-      m_cond_var.wait(lck);
+     while (m_eState == KEY_SESSION_WAITING_FOR_LOAD_SESSION) {
+       CDM_DLOG() << "Waiting for load message!";
+       std::unique_lock<std::mutex> lck(m_mtx);
+       m_cond_var.wait(lck);
+     }
+
+     if (m_eState == KEY_SESSION_UPDATE_LICENSE || m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+       while (m_eState == KEY_SESSION_LOADED) {
+         CDM_DLOG() << "Waiting for Load message!";
+         std::unique_lock<std::mutex> lck(m_mtx);
+         m_cond_var.wait(lck);
+       }
+       if (m_eState == KEY_SESSION_UPDATE_LICENSE) {
+         ret = 0;
+         CDM_DLOG() << "setting m_eState to KEY_SESSION_LOADED";
+         m_eState = KEY_SESSION_LOADED; // TODO: To be rechecked and updated.
+       }
+       if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+         ret = 0;
+         CDM_DLOG() << "setting m_eState to KEY_SESSION_EXPIRED";
+         m_eState = KEY_SESSION_EXPIRED; // TODO: To be rechecked and updated.
+         responseMsg.assign("message:");
+      }
     }
   }
   responseMsg.append(m_message.c_str(), m_message.length());
@@ -312,15 +319,17 @@ void OpenCdm::MessageCallback(OpenCdmPlatformSessionId,
   CDM_LOG_LINE("call over");
 }
 
-void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId, std::string message) {
+void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_session_id, std::string message) {
   CDM_LOG_LINE("message is %s", message.c_str());
-  std::string expectedMsg = "KeyUsable";
-  if (message == expectedMsg)
+  if (message == "KeyUsable")
     m_eState = KEY_SESSION_UPDATE_LICENSE;
   else if (message == "KeyReleased")
     m_eState = KEY_SESSION_REMOVED;
+  else if (message == "KeyExpired")
+    m_eState = KEY_SESSION_EXPIRED;
   else
     m_eState = KEY_SESSION_ERROR;
+
   m_message = message;
   m_cond_var.notify_all();
   CDM_LOG_LINE("call over, state now %s", sessionStateToString(m_eState));
