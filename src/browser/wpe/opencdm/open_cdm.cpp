@@ -69,7 +69,7 @@ int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
   return ret.platform_response ==  PLATFORM_CALL_SUCCESS;
 }
 
-int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id, int licenseType) {
+int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id, LicenseType licenseType) {
   // FIXME: Now we're back to integer return types that don't follow the normal true/false
   // pattern. The point of this code is to instil fear in your heart.
   int ret = 1;

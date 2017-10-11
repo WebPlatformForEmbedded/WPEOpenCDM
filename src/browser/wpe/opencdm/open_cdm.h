@@ -60,7 +60,13 @@ public:
   OpenCdm();
   ~OpenCdm() override;
 
-  int CreateSession(const std::string& ,unsigned char* , int, std::string&, int);
+  typedef enum {
+      Temporary = 0,
+      PersistentUsageRecord,
+      PersistentLicense
+  } LicenseType;
+
+  int CreateSession(const std::string& ,unsigned char* , int, std::string&, LicenseType);
   int GetKeyMessage(std::string&, int*, unsigned char*, int*);
   int SetServerCertificate(const uint8_t*, uint32_t);
   int Load(std::string&);
