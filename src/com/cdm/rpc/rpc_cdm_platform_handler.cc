@@ -85,16 +85,22 @@ struct RpcThreadCallParam {
 RpcCdmPlatformHandler::RpcCdmPlatformHandler(
     OpenCdmPlatformComCallbackReceiver *callback_receiver)
 : callback_receiver_(callback_receiver) {
-  CDM_DLOG() << "new RpcCdmPlatformHandler instance";
 
+  // FIXME: This is used as a flag to indicate the state of our sever initialization:
+  //     UNITIALIZED - Server thread failed to launch.
+  //     FAULTY      - Failed to get an RPC socket.
+  //   It's super easy to change that interface in the code below tho,
+  //   and our caller's aren't even taking notice of this in a consistent
+  //   way. Probably should look at exceptions at some point. Be careful intreprid traveller.
   com_state = UNINITIALIZED;
 
   rpc_server_host = "localhost";
+  CDM_LOG_LINE("initializing RPC server on %s", rpc_server_host.c_str());
 
   // prepare starting threaded RPC Server
+  // FIXME: Let's use C++ threads and not pthreads.
   pthread_t thread1;
   thread_parm_t *parm = NULL;
-  int rc = 0;
 
   int sock = RPC_ANYSOCK;
   int prognum = gettransient(IPPROTO_TCP, 1, &sock);
@@ -103,24 +109,26 @@ RpcCdmPlatformHandler::RpcCdmPlatformHandler(
 
   if (prognum == 0) {
     com_state = FAULTY;
-    CDM_DLOG() << "new RpcCdmPlatformHandler instance creation failed.";
+    CDM_LOG_LINE("failed to get an RPC socket");
     return;
   }
   rpc_cdm_platform_con_map[prognum] = this;
 
   /* set up multiple parameters to pass to the thread */
+  // I like lots of different comment styles.
   parm = reinterpret_cast<thread_parm_t*>(malloc(sizeof(thread_parm_t)));
   parm->sock = sock;
   parm->prognum = prognum;
   RpcThreadCallParam *call_params = new RpcThreadCallParam();
   call_params->caller = this;
   call_params->thread_parm = parm;
-  rc = pthread_create(&thread1, NULL, RpcCdmPlatformHandler::DelegateRpcInit,
-                      call_params);
-  CDM_DLOG() << "thread created: " << rc;
+  if (!pthread_create(&thread1, NULL, RpcCdmPlatformHandler::DelegateRpcInit, call_params)) {
+      CDM_LOG_LINE("failed to create a thread: %s", strerror(errno));
+      return;
+  }
 
   com_state = INITIALIZED;
-  // TODO(sph): pthread_exit to terminate thread
+  // TODO(sph): pthread_exit to terminate thread // Oh dear.
 }
 
 void *RpcCdmPlatformHandler::DelegateRpcInit(void *call_params) {
@@ -133,7 +141,6 @@ void *RpcCdmPlatformHandler::DelegateRpcInit(void *call_params) {
 
 void RpcCdmPlatformHandler::OnMessage1SvcDelegate(rpc_cb_message *kmm, struct svc_req *rqstp, RpcCdmPlatformHandler *p_instance)
 {
-  CDM_DLOG() << "on_key_message_1_svc";
   p_instance->OnMessage1Svc(kmm, rqstp);
 }
 
@@ -141,23 +148,18 @@ void RpcCdmPlatformHandler::OnKeyStatusUpdate1SvcDelegate(
     rpc_cb_key_status_update *kmm, struct svc_req *rqstp,
     RpcCdmPlatformHandler *p_instance)
 {
-  CDM_DLOG() << "on_key_status_update_1_svc";
   OpenCdmPlatformSessionId session_id;
-  std::string message = std::string(kmm->message);
+  std::string message(kmm->message);
 
   session_id.session_id_len = kmm->session_id.session_id_len;
   session_id.session_id = kmm->session_id.session_id_val;
 
-  CDM_DLOG() << "on_key_status_update_1_svc 1";
   p_instance->callback_receiver_->OnKeyStatusUpdateCallback(session_id, message);
-  CDM_DLOG() << "on_key_status_update_1_svc 2";
 }
 
 
 void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
 {
-  CDM_DLOG() << "on_key_message_1_svc";
-
   std::string delimiter = "#SPLIT#";
   std::string laURL;
   std::string message;
@@ -171,20 +173,17 @@ void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
 
   message = s.substr(s.find(delimiter) + delimiter.size(), s.size());
 
-
   //get open_media_keys instance to execute callbacks
   this->callback_receiver_->MessageCallback(session_id, message, laURL);
 }
 
 void RpcCdmPlatformHandler::OnReady1SvcDelegate(rpc_cb_ready *keyready_param, struct svc_req *rqstp, RpcCdmPlatformHandler *p_instance)
 {
-  CDM_DLOG() << "on_key_ready_1_svc";
   p_instance->OnReady1Svc(keyready_param, rqstp);
 }
 
 void RpcCdmPlatformHandler::OnReady1Svc(rpc_cb_ready *kr, struct svc_req *)
 {
-  CDM_DLOG() << "on_key_ready_1_svc OnReady1SvcDelegate";
   OpenCdmPlatformSessionId session_id;
 
   session_id.session_id_len = kr->session_id.session_id_len;
@@ -195,13 +194,11 @@ void RpcCdmPlatformHandler::OnReady1Svc(rpc_cb_ready *kr, struct svc_req *)
 
 void RpcCdmPlatformHandler::OnError1SvcDelegate(rpc_cb_error *err_param, struct svc_req *rqstp, RpcCdmPlatformHandler *p_instance)
 {
-  CDM_DLOG() << "on_key_error_1_svc";
   p_instance->OnError1Svc(err_param, rqstp);
 }
 
 void RpcCdmPlatformHandler::OnError1Svc(rpc_cb_error * ke, struct svc_req *)
 {
-  CDM_DLOG() << "on_key_error_1_svc";
   OpenCdmPlatformSessionId session_id;
 
   session_id.session_id_len = ke->session_id.session_id_len;
@@ -211,7 +208,6 @@ void RpcCdmPlatformHandler::OnError1Svc(rpc_cb_error * ke, struct svc_req *)
   this->callback_receiver_->ErrorCallback(session_id, sys_error,"KEY_ERROR");
 }
 
-//static void RpcCdmPlatformHandler::open_cdm_callback_1(struct svc_req *rqstp, register SVCXPRT *transp)
 void RpcCdmPlatformHandler::RpcCallbackPrivate(struct svc_req *rqstp, register SVCXPRT *transp)
 {
   union {
@@ -223,31 +219,35 @@ void RpcCdmPlatformHandler::RpcCallbackPrivate(struct svc_req *rqstp, register S
   xdrproc_t _xdr_argument, _xdr_result;
   char *(*local)(char *, struct svc_req *, RpcCdmPlatformHandler *);
 
-  CDM_DLOG() << "RpcCallbackPrivate \n";
   switch (rqstp->rq_proc) {
   case NULLPROC:
+    CDM_LOG_LINE("received request for NULLPROC function");
     (void) svc_sendreply (transp, (xdrproc_t) xdr_void, (char *)NULL);
     return;
 
   case ON_KEY_MESSAGE:
+    CDM_LOG_LINE("received request for ON_KEY_MESSAGE function");
     _xdr_argument = (xdrproc_t) xdr_rpc_cb_message;
     _xdr_result = (xdrproc_t) xdr_void;
     local = (char *(*)(char *, struct svc_req *, RpcCdmPlatformHandler *)) RpcCdmPlatformHandler::OnMessage1SvcDelegate;
     break;
 
   case ON_KEY_READY:
+    CDM_LOG_LINE("received request for ON_KEY_READY function");
     _xdr_argument = (xdrproc_t) xdr_rpc_cb_ready;
     _xdr_result = (xdrproc_t) xdr_void;
     local = (char *(*)(char *, struct svc_req *, RpcCdmPlatformHandler *)) RpcCdmPlatformHandler::OnReady1SvcDelegate;
     break;
 
   case ON_KEY_ERROR:
+    CDM_LOG_LINE("received request for ON_KEY_ERROR function");
     _xdr_argument = (xdrproc_t) xdr_rpc_cb_error;
     _xdr_result = (xdrproc_t) xdr_void;
     local = (char *(*)(char *, struct svc_req *, RpcCdmPlatformHandler *)) RpcCdmPlatformHandler::OnError1SvcDelegate;
     break;
 
   case ON_KEY_STATUS_UPDATE:
+    CDM_LOG_LINE("received request for ON_KEY_STATUS_UPDATE function");
     _xdr_argument = (xdrproc_t) xdr_rpc_cb_key_status_update;
     _xdr_result = (xdrproc_t) xdr_void;
     local = (char *(*)(char *, struct svc_req *, RpcCdmPlatformHandler *))
@@ -255,20 +255,24 @@ void RpcCdmPlatformHandler::RpcCallbackPrivate(struct svc_req *rqstp, register S
     break;
 
   default:
+    CDM_LOG_LINE("received request for known function");
     svcerr_noproc (transp);
     return;
   }
   memset ((char *)&argument, 0, sizeof (argument));
   if (!svc_getargs (transp, (xdrproc_t) _xdr_argument, (caddr_t) &argument)) {
+    CDM_LOG_LINE("failed to get service arguments");
     svcerr_decode (transp);
     return;
   }
   result = (*local)((char *)&argument, rqstp, this);
   if (result != NULL && !svc_sendreply(transp, (xdrproc_t) _xdr_result, result)) {
+    CDM_LOG_LINE("failed to send result back");
     svcerr_systemerr (transp);
   }
   if (!svc_freeargs (transp, (xdrproc_t) _xdr_argument, (caddr_t) &argument)) {
-    fprintf (stderr, "%s", "unable to free arguments");
+    CDM_LOG_LINE("failed to free the response arguments");
+    // FIXME: Really? We decide to bomb here but in no other cases??
     exit (1);
   }
   return;
@@ -309,13 +313,13 @@ void RpcCdmPlatformHandler::DelegateRpcCallback(struct svc_req *rqstp,
 }
 
 MediaKeysResponse RpcCdmPlatformHandler::MediaKeys(std::string key_system) {
-  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeys";
+  CDM_LOG_LINE("requesting media keys for %s", key_system.c_str());
   MediaKeysResponse response;
 
   // rpc not ready
   if (com_state == FAULTY) {
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeys connection state faulty";
+    CDM_LOG_LINE("connection state faulty");
     return response;
   }
 
@@ -325,10 +329,10 @@ MediaKeysResponse RpcCdmPlatformHandler::MediaKeys(std::string key_system) {
     com_state = FAULTY;
     clnt_pcreateerror(rpc_server_host.c_str());
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
+    CDM_LOG_LINE("connection to server failed");
     return response;
   } else {
-    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
+    CDM_LOG_LINE("connected to the server");
   }
   // Cdm_MediaKeys
   rpc_response_generic *rpc_response;
@@ -344,10 +348,10 @@ MediaKeysResponse RpcCdmPlatformHandler::MediaKeys(std::string key_system) {
   }
 
   if (rpc_response->platform_val == 0) {
-    CDM_DLOG() << "cdm_mediakeys_rpc_1 success\n ";
+    CDM_LOG_LINE("successfully received from server");
     response.platform_response = PLATFORM_CALL_SUCCESS;
   } else {
-    CDM_DLOG() << "cdm_mediakeys_rpc_1 failed\n ";
+    CDM_LOG_LINE("failed to receive keys from server");
     response.platform_response = PLATFORM_CALL_FAIL;
   }
   free(rpc_param.key_system.key_system_val);
@@ -356,13 +360,13 @@ MediaKeysResponse RpcCdmPlatformHandler::MediaKeys(std::string key_system) {
   //EME equivalent : media_key_.isTypeSupported()
 MediaKeyTypeResponse RpcCdmPlatformHandler::IsTypeSupported(const std::string& key_system,
                                             const std::string& mime_type) {
-  CDM_DLOG() << "RpcCdmPlatformHandler:: IsTypeSupported";
+  CDM_LOG_LINE("asking if key system '%s' and MIME type '%s' are supported", key_system.c_str(), mime_type.c_str());
   MediaKeyTypeResponse response;
 
-  // rpc not ready
+  // RPC not ready.
   if (com_state == FAULTY) {
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeys connection state faulty";
+    CDM_LOG_LINE("connection state faulty");
     return response;
   }
 
@@ -372,44 +376,45 @@ MediaKeyTypeResponse RpcCdmPlatformHandler::IsTypeSupported(const std::string& k
     com_state = FAULTY;
     clnt_pcreateerror(rpc_server_host.c_str());
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG() << "RpcCdmPlatformHandler connection to server failed";
+    CDM_LOG_LINE("connection to server failed");
     return response;
   } else {
-    CDM_DLOG() << "RpcCdmPlatformHandler connected to server";
+    CDM_LOG_LINE("connected to server");
   }
 
-  //Pass keysystem
+  // Pass Keysystem.
   rpc_response_generic *rpc_response;
   rpc_request_is_type_supported rpc_param;
   rpc_param.key_system.key_system_val = reinterpret_cast<char *>(
       malloc(key_system.size()));
   memcpy(rpc_param.key_system.key_system_val, key_system.c_str(),
          key_system.size());
-  CDM_DLOG() << "Pass keysystem " << key_system << "\n";
-  CDM_DLOG() << "Pass keysystem len  " << key_system.size();
   rpc_param.key_system.key_system_len = key_system.size();
- //pass mimeType
+
+  // Pass MIME type.
   rpc_param.mime_type.mime_type_val = reinterpret_cast<char *>(
       malloc(mime_type.size()));
   memcpy(rpc_param.mime_type.mime_type_val, mime_type.c_str(),
          mime_type.size());
   rpc_param.mime_type.mime_type_len = mime_type.size();
 
- //rpc call to server
+  // RPC call to the server.
   if ((rpc_response = rpc_open_cdm_is_type_supported_1(&rpc_param, rpc_client))
       == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
   }
 
   if (rpc_response->platform_val == 0) {
-    CDM_DLOG() << "rpc_open_cdm_is_type_supported_1 success\n ";
+    CDM_LOG_LINE("received good response from server");
     response.platform_response = PLATFORM_CALL_SUCCESS;
   } else {
-    CDM_DLOG() << "rpc_open_cdm_is_type_supported_1 failed\n ";
+    CDM_LOG_LINE("received a bad response from server");
     response.platform_response = PLATFORM_CALL_FAIL;
   }
+
   free(rpc_param.mime_type.mime_type_val);
   free(rpc_param.key_system.key_system_val);
+
   return response;
 }
 
@@ -450,14 +455,13 @@ MediaKeySetServerCertificateResponse RpcCdmPlatformHandler::MediaKeySetServerCer
 MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
     const std::string& init_data_type, const uint8_t* init_data,
     int init_data_length) {
-  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeysCreateSession";
+  CDM_LOG_LINE("create session for ID type %s", init_data_type.c_str());
   MediaKeysCreateSessionResponse response;
 
   // rpc not ready
   if (com_state == FAULTY) {
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG()
-    << "RpcCdmPlatformHandler::MediaKeysCreateSession connection state faulty";
+    CDM_LOG_LINE("rpc faulty, bailing");
     return response;
   }
   rpc_response_create_session *rpc_response;
@@ -485,22 +489,20 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
   rpc_param.callback_info.prog_version = 1;
   // TODO(ska): specify dynamically, encapsulate RPC
 
-  CDM_DLOG() << "createsession_rpc_1 ";
-
   if ((rpc_response = rpc_open_cdm_mediakeys_create_session_1(&rpc_param,
                                                               rpc_client))
       == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
-    CDM_DLOG() << "error createsession_rpc_1";
+    CDM_LOG_LINE("failed to connect to server");
   }
 
   // TODO(ska): parse session_id from csresult into
   OpenCdmPlatformSessionId session_id;
   if (rpc_response->platform_val == 0) {
-    CDM_DLOG() << "MediaKeys_CreateSession success\n ";
-    CDM_DLOG() << "CreateSession sid.len: " <<rpc_response->session_id.session_id_len;
-    CDM_DLOG() << "CreateSession sid[0]: " << rpc_response->session_id.session_id_val[0];
-    CDM_DLOG() << "CreateSession sid[1]: " << rpc_response->session_id.session_id_val[1];
+    CDM_LOG_LINE("successfully got a session id of length %d:", rpc_response->session_id.session_id_len);
+    CDMDumpMemory(reinterpret_cast<const uint8_t*>(rpc_response->session_id.session_id_val),
+                  rpc_response->session_id.session_id_len);
+
     response.sys_err = rpc_response->platform_val;
     response.platform_response = PLATFORM_CALL_SUCCESS;
     session_id.session_id = rpc_response->session_id.session_id_val;
@@ -508,11 +510,13 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
     response.session_id = session_id;
   } else {
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG() << "MediaKeys_CreateSession failed\n ";
+    CDM_LOG_LINE("failed to create a session id");
   }
+
   free(rpc_param.callback_info.hostname.hostname_val);
   free(rpc_param.init_data.init_data_val);
   free(rpc_param.init_data_type.init_data_type_val);
+
   return response;
 }
 
@@ -554,17 +558,14 @@ MediaKeysLoadSessionResponse RpcCdmPlatformHandler::MediaKeysLoadSession(
 MediaKeySessionUpdateResponse RpcCdmPlatformHandler::MediaKeySessionUpdate(
     const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
     uint32_t session_id_len) {
-  CDM_DLOG() << "RpcCdmPlatformHandler::MediaKeySessionUpdate";
   MediaKeySessionUpdateResponse response;
 
   rpc_response_generic *rpc_response;
   rpc_request_session_update rpc_param;
 
-  // rpc not ready
   if (com_state == FAULTY) {
+    CDM_LOG_LINE("rpc connection faulty");
     response.platform_response = PLATFORM_CALL_FAIL;
-    CDM_DLOG()
-    << "RpcCdmPlatformHandler::MediaKeySessionUpdate connection state faulty";
     return response;
   }
 
@@ -580,14 +581,16 @@ MediaKeySessionUpdateResponse RpcCdmPlatformHandler::MediaKeySessionUpdate(
   }
   if (rpc_response) {
     if (rpc_response->platform_val == 0) {
-       CDM_DLOG() << "MediaKeySessionUpdate success\n ";
+       CDM_LOG_LINE("successfully called platform");
        response.platform_response = PLATFORM_CALL_SUCCESS;
     } else {
-       CDM_DLOG() << "MediaKeySessionUpdate failed\n ";
+       CDM_LOG_LINE("platform call failed");
        response.platform_response = PLATFORM_CALL_FAIL;
     }
   }
+
   free(rpc_param.key.key_val);
+
   return response;
 }
 
