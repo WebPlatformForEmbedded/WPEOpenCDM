@@ -30,14 +30,12 @@ namespace media {
 OpenCdm::OpenCdm()
     : media_engine_(NULL)
     , platform_(NULL) {
-  CDM_DLOG() << "OpenDecryptor construct: key_system";
   platform_ = OpenCdmPlatformInterfaceFactory::Create(this);
   m_eState = KEY_SESSION_INIT;
 }
 
 OpenCdm::~OpenCdm() {
-  CDM_DLOG() << "OpenCDM destruct";
-  // clean up resources
+  // FIXME: Smart pointers are smart.
   if (media_engine_) {
     delete(media_engine_);
   }
@@ -49,44 +47,44 @@ OpenCdm::~OpenCdm() {
 }
 
 void OpenCdm::SelectKeySystem(const std::string& key_system) {
-  CDM_DLOG() << "OpenCdm: SelectKeySystem$" << "\n";
+  CDM_LOG_LINE("ask for keys for system %s", key_system.c_str());
   m_key_system = key_system;
-  platform_->MediaKeys(key_system);
-  m_eState = KEY_SESSION_INIT;
+  auto response = platform_->MediaKeys(key_system);
+  if (response.platform_response == PLATFORM_CALL_SUCCESS)
+    m_eState = KEY_SESSION_INIT;
 }
 
 void OpenCdm::SelectSession(const std::string& session_id_rcvd) {
-  CDM_DLOG() << " Enter : SelectSession";
+  CDM_LOG_LINE("get session for %s", session_id_rcvd.c_str());
+  // FIXME: I don't like the look of this strdup, probably a leak.
+  // FIXME: Any guesses why we go from a string interface to an open struct?
   m_session_id.session_id = strdup(session_id_rcvd.c_str());
   m_session_id.session_id_len = (uint32_t)session_id_rcvd.size();
 }
 
 int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
                                   uint32_t server_certificate_data_size) {
-  MediaKeySetServerCertificateResponse ret = platform_->MediaKeySetServerCertificate((uint8_t*)server_certificate_data, server_certificate_data_size);
-
-  if (ret.platform_response ==  PLATFORM_CALL_SUCCESS)
-    return (true);
-  else
-    return (false);
+  // FIXME: We propagate RPC call results from this method, but not other ones, why?
+  auto ret = platform_->MediaKeySetServerCertificate((uint8_t*)server_certificate_data, server_certificate_data_size);
+  return ret.platform_response ==  PLATFORM_CALL_SUCCESS;
 }
 
 int OpenCdm::CreateSession(const std::string& mimeType, unsigned char* pbInitData, int cbInitData, std::string& session_id) {
+  // FIXME: Now we're back to integer return types that don't follow the normal true/false
+  // pattern. The point of this code is to instil fear in your heart.
   int ret = 1;
   m_eState = KEY_SESSION_INIT;
-  CDM_DLOG() << " Enter : CreateSession";
 
-  MediaKeysCreateSessionResponse response = platform_->MediaKeysCreateSession(mimeType, pbInitData, cbInitData);
-  CDM_DLOG() << "Contin : CreateSession ";
+  auto response = platform_->MediaKeysCreateSession(mimeType, pbInitData, cbInitData);
   if (response.platform_response == PLATFORM_CALL_SUCCESS) {
-    CDM_DLOG() << "New Session created";
+    CDM_LOG_LINE("new session created");
     m_session_id = response.session_id;
     if (KEY_SESSION_INIT == m_eState)
       m_eState = KEY_SESSION_WAITING_FOR_MESSAGE;
     ret = 0;
   } else {
-        CDM_DLOG() << "FAIL to create session!";
-        m_eState = KEY_SESSION_ERROR;
+    CDM_LOG_LINE("failed to create a session");
+    m_eState = KEY_SESSION_ERROR;
   }
 
   session_id.assign(m_session_id.session_id, m_session_id.session_id_len);// initializing out parameter.
@@ -94,19 +92,16 @@ int OpenCdm::CreateSession(const std::string& mimeType, unsigned char* pbInitDat
   return ret;
 }
 
-// caller provided buffer, MAX_LENGTH...
 int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     unsigned char* licenseURL, int* urlLength) {
 
+  CDM_LOG_LINE("taking our lock");
   std::unique_lock<std::mutex> lck(m_mtx);
-  CDM_DLOG() << "GetKeyMessage >> invoked from ocdm :: estate = " << m_eState << "\n";
+  CDM_LOG_LINE("state is %s", sessionStateToString(m_eState));
 
-  while (m_eState == KEY_SESSION_WAITING_FOR_MESSAGE) {
-    CDM_DLOG() << "Waiting for key message!";
-    m_cond_var.wait(lck);
-  }
+  m_cond_var.wait(lck, [=]() { return m_eState != KEY_SESSION_WAITING_FOR_MESSAGE; });
 
-  CDM_DLOG() << "Key message should be ready or no need key challenge/message."<< "\n" ;
+  CDM_LOG_LINE("key message now ready, state is %s", sessionStateToString(m_eState));
 
   if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
     char temp[m_message.length()];
@@ -118,7 +113,7 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     *urlLength = m_dest_url.length();
     char msg[m_message.length()];
     m_message.copy( msg, m_message.length() , 0);
-    CDM_DLOG() << "setting m_eState to KEY_SESSION_WAITING_FOR_LICENSE";
+    CDM_LOG_LINE("setting state to KEY_SESSION_WAITING_FOR_LICENSE");
     m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
   }
 
@@ -126,6 +121,7 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     *challengeLength = 0;
     *licenseURL= 0;
   }
+  // FIXME: Always return false??
   return 0;
 }
 
@@ -161,38 +157,32 @@ int OpenCdm::Load(std::string& responseMsg) {
   return ret;
 }
 
-int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg) {
-
-  CDM_DLOG() << "Update >> invoked from ocdm :: estate = " << m_eState << "\n";
+int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg)
+{
+  CDM_LOG_LINE("invoked, state is %s", sessionStateToString(m_eState));
 
   int ret = 1;
-  CDM_DLOG() << "Start";
-  for(int i = 0; i < cbResponse; i++)
-    cout << pbResponse[i] <<"";
-  CDM_DLOG() << "\nEnd";
-  CDM_DLOG() << "Update session with info from server.";
-  platform_->MediaKeySessionUpdate((uint8_t*)pbResponse, cbResponse, m_session_id.session_id, m_session_id.session_id_len);
-  CDM_DLOG() << "Update session with info from server complete.";
 
-  while (m_eState == KEY_SESSION_WAITING_FOR_LICENSE) {
-    CDM_DLOG() << "Waiting for license update status!" << "\n";
-    fflush(stdout);
-    std::unique_lock<std::mutex> lck(m_mtx);
-    m_cond_var.wait(lck);
-  }
-  if (m_eState == KEY_SESSION_UPDATE_LICENSE) {
+  CDM_LOG_LINE("received a response of %d bytes", cbResponse);
+  CDMDumpMemory(pbResponse, cbResponse);
+
+  platform_->MediaKeySessionUpdate((uint8_t*)pbResponse, cbResponse, m_session_id.session_id, m_session_id.session_id_len);
+
+  CDM_LOG_LINE("taking our lock");
+  std::unique_lock<std::mutex> lck(m_mtx);
+  CDM_LOG_LINE("waiting for licence, state is %s", sessionStateToString(m_eState));
+  m_cond_var.wait(lck, [=]() { return m_eState != KEY_SESSION_WAITING_FOR_LICENSE; });
+  CDM_LOG_LINE("received a lience update, state is now %s", sessionStateToString(m_eState));
+
+  if (m_eState == KEY_SESSION_UPDATE_LICENSE)
     ret = 0;
+  else if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+    responseMsg.assign("message:");
+    responseMsg.append(m_message.c_str(), m_message.length());
+    CDM_LOG_LINE("The response message contains %d bytes and its contents are:", responseMsg.size());
+    CDMDumpMemory(reinterpret_cast<const uint8_t*>(responseMsg.data()), responseMsg.size());
   }
-  else {
-    CDM_DLOG() <<"Got license update status!" << "\n";
-    fflush(stdout);
-    if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
-      m_eState = KEY_SESSION_WAITING_FOR_LICENSE;
-      responseMsg.assign("message:");
-    }
-  }
-  responseMsg.append(m_message.c_str(), m_message.length());
-  printf("response Message = %s\n", responseMsg.c_str());
+
   return ret;
 }
 
@@ -250,25 +240,29 @@ int OpenCdm::ReleaseMem() {
 int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength, unsigned char* ivData, uint32_t ivDataLength) {
   int ret = 1;
   uint32_t outSize;
-  CDM_DLOG() << "OpenCdm::Decrypt session_id : " << m_session_id.session_id << endl;
-  CDM_DLOG() << "OpenCdm::Decrypt session_id_len : " << m_session_id.session_id_len << endl;
-  CDM_DLOG() << "OpenCdm::Decrypt encryptedDataLength : " << encryptedDataLength << endl;
-  CDM_DLOG() << "OpenCdm::Decrypt ivDataLength : " << ivDataLength << endl;
+  CDM_LOG_LINE("session_id:");
+  CDMDumpMemory(m_session_id.session_id, m_session_id.session_id_len);
+  CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
+  CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
+
   // mediaengine instantiation
   if (!media_engine_) {
     // FIXME:(ska): handle mutiple sessions
     media_engine_ = OpenCdmMediaengineFactory::Create(m_key_system, m_session_id);
-    CDM_DLOG() << "::" << endl;
-    if (!media_engine_){
-      CDM_DLOG() << "::" << endl;
+    if (!media_engine_)
       return ret;
-    }
   }
-  CDM_DLOG() << "Returned back to OpenCdm::Decrypt";
+
   DecryptResponse dr = media_engine_->Decrypt((const uint8_t*)ivData, ivDataLength,
       (const uint8_t*)encryptedData, encryptedDataLength, (uint8_t*)encryptedData, outSize);
 
-  CDM_DLOG() << "media_engine_->Decrypt done " << dr.platform_response;
+  if (dr.platform_response == PLATFORM_CALL_SUCCESS)
+      CDM_LOG_LINE("decryption suceeded, decrypted content has %ld bytes", dr.cbResponseData);
+  else
+      CDM_LOG_LINE("platform failed to decrypt content");
+
+  // FIXME: Here's another place where we return irregardless of what Decrypt happened to do
+  //   Until a review of callsites has occurred, all we can do is add some logging.
   return 0;
 }
 
@@ -276,52 +270,45 @@ bool OpenCdm::IsTypeSupported(const std::string& keySystem, const std::string& m
   MediaKeyTypeResponse ret;
 
   ret = platform_->IsTypeSupported(keySystem, mimeType);
-  CDM_DLOG() << "IsTypeSupported ";
 
-  if (ret.platform_response ==  PLATFORM_CALL_SUCCESS )
-    return (true);
-  else
-    return (false);
+  return ret.platform_response == PLATFORM_CALL_SUCCESS;
 }
 
 void OpenCdm::ReadyCallback(OpenCdmPlatformSessionId platform_session_id) {
-
-  CDM_DLOG() << "OpenCdm::ReadyCallback";
-
+  CDM_LOG_LINE("call comes in");
   std::unique_lock<std::mutex> lck(m_mtx);
   m_eState = KEY_SESSION_READY;
   m_cond_var.notify_all();
-
-  CDM_DLOG() << "OpenCdm::ReadyCallback";
+  CDM_LOG_LINE("call over");
 }
 
-void OpenCdm::ErrorCallback(OpenCdmPlatformSessionId platform_session_id,
-    uint32_t sys_err, std::string err_msg) {
-  CDM_DLOG() << "OpenCdm::ErrorCallback";
+void OpenCdm::ErrorCallback(OpenCdmPlatformSessionId,
+    uint32_t, std::string err_msg) {
+  CDM_LOG_LINE("error message is %s", err_msg.c_str());
   std::unique_lock<std::mutex> lck(m_mtx);
   m_message = err_msg;
   m_eState = KEY_SESSION_ERROR;
   m_cond_var.notify_all();
+  CDM_LOG_LINE("call over");
 }
 
-void OpenCdm::MessageCallback(OpenCdmPlatformSessionId platform_session_id,
-    std::string& message, std::string destination_url) {
+void OpenCdm::MessageCallback(OpenCdmPlatformSessionId,
+                              std::string& message,
+                              std::string destination_url)
+{
+  CDM_LOG_LINE("message has %d bytes:", message.size());
+  CDMDumpMemory(reinterpret_cast<const uint8_t*>(message.data()), message.size());
 
-  CDM_DLOG() << "OpenCdm::MessageCallback:";
-  fflush(stdout);
-  CDM_DLOG() << "Start MessageCallback";
-  for(int i = 0; i < message.length(); i++)
-    printf("%2x ",message[i]);
-  CDM_DLOG() << "End MessageCallback";
   std::unique_lock<std::mutex> lck(m_mtx);
   m_message = message;
   m_dest_url = destination_url;
   m_eState = KEY_SESSION_MESSAGE_RECEIVED;
   m_cond_var.notify_all();
+  CDM_LOG_LINE("call over");
 }
 
-void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_session_id, std::string message) {
-
+void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId, std::string message) {
+  CDM_LOG_LINE("message is %s", message.c_str());
   std::string expectedMsg = "KeyUsable";
   if (message == expectedMsg)
     m_eState = KEY_SESSION_UPDATE_LICENSE;
@@ -329,7 +316,6 @@ void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_sessio
     m_eState = KEY_SESSION_ERROR;
   m_message = message;
   m_cond_var.notify_all();
-
-  CDM_DLOG() << "Got key status update ->  " << message;
+  CDM_LOG_LINE("call over, state now %s", sessionStateToString(m_eState));
 }
 } // namespace media

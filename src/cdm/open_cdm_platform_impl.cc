@@ -23,12 +23,10 @@ namespace media {
 OpenCdmPlatformImpl::OpenCdmPlatformImpl(
     OpenCdmPlatformComCallbackReceiver *callback_receiver)
     : callback_receiver_(callback_receiver) {
-  CDM_DLOG() << "new OpenCdmPlatformCdmiImpl instance";
   com_handler_ = OpenCdmPlatformComHandlerFactory::Create(this);
 }
 
 MediaKeysResponse OpenCdmPlatformImpl::MediaKeys(std::string key_system) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeys";
   MediaKeysResponse response = com_handler_->MediaKeys(key_system);
 
   return response;
@@ -37,7 +35,6 @@ MediaKeysResponse OpenCdmPlatformImpl::MediaKeys(std::string key_system) {
 MediaKeysCreateSessionResponse OpenCdmPlatformImpl::MediaKeysCreateSession(
     const std::string& init_data_type, const uint8_t* init_data,
     int init_data_length) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeysCreateSession";
   MediaKeysCreateSessionResponse response;
 
   response = com_handler_->MediaKeysCreateSession(init_data_type, init_data,
@@ -48,7 +45,6 @@ MediaKeysCreateSessionResponse OpenCdmPlatformImpl::MediaKeysCreateSession(
 
 MediaKeysLoadSessionResponse OpenCdmPlatformImpl::MediaKeysLoadSession(
     char *session_id_val, uint32_t session_id_len) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeysLoadSession";
   MediaKeysLoadSessionResponse response;
 
   response = com_handler_->MediaKeysLoadSession(session_id_val, session_id_len);
@@ -59,7 +55,6 @@ MediaKeysLoadSessionResponse OpenCdmPlatformImpl::MediaKeysLoadSession(
 MediaKeySessionUpdateResponse OpenCdmPlatformImpl::MediaKeySessionUpdate(
     const uint8_t *pbKey, uint32_t cbKey, char *session_id_val,
     uint32_t session_id_len) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionUpdate";
   MediaKeySessionUpdateResponse response;
 
   response = com_handler_->MediaKeySessionUpdate(pbKey, cbKey, session_id_val,
@@ -70,7 +65,6 @@ MediaKeySessionUpdateResponse OpenCdmPlatformImpl::MediaKeySessionUpdate(
 
 MediaKeySetServerCertificateResponse OpenCdmPlatformImpl::MediaKeySetServerCertificate(
     const uint8_t *pbServerCert, uint32_t cbServerCert) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeysSetServerCertificate";
   MediaKeySetServerCertificateResponse response;
 
   response = com_handler_->MediaKeySetServerCertificate(pbServerCert, cbServerCert);
@@ -80,7 +74,6 @@ MediaKeySetServerCertificateResponse OpenCdmPlatformImpl::MediaKeySetServerCerti
 
 MediaKeySessionRemoveResponse OpenCdmPlatformImpl::MediaKeySessionRemove(
     char *session_id_val, uint32_t session_id_len) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionRemove";
   MediaKeySessionRemoveResponse response;
 
   response = com_handler_->MediaKeySessionRemove(session_id_val,
@@ -91,7 +84,6 @@ MediaKeySessionRemoveResponse OpenCdmPlatformImpl::MediaKeySessionRemove(
 
 MediaKeySessionReleaseResponse OpenCdmPlatformImpl::MediaKeySessionRelease(
     char *session_id_val, uint32_t session_id_len) {
-  CDM_DLOG() << "OpenCdmPlatformCdmiImpl::MediaKeySessionRelease";
   MediaKeySessionReleaseResponse response;
 
   response = com_handler_->MediaKeySessionRelease(session_id_val,
@@ -102,13 +94,10 @@ MediaKeySessionReleaseResponse OpenCdmPlatformImpl::MediaKeySessionRelease(
 
 MediaKeyTypeResponse OpenCdmPlatformImpl::IsTypeSupported(
     const std::string& keysystem,const std::string& mimeType) {
-
-    CDM_DLOG() << "OpenCdmPlatformCdmiImpl::IsTypeSupported";
     MediaKeyTypeResponse response = com_handler_->IsTypeSupported(keysystem,mimeType);
     return response;
 }
 
-// OpenCdmComCallbackReceiver inheritance
 void OpenCdmPlatformImpl::ErrorCallback(
     OpenCdmPlatformSessionId platform_session_id, uint32_t sys_err,
     std::string err_msg) {

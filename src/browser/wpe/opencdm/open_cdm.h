@@ -70,6 +70,22 @@ public:
   int Decrypt(unsigned char*, uint32_t, unsigned char*, uint32_t);
   int ReleaseMem();
 
+  static const char* sessionStateToString(InternalSessionState state) {
+      switch (state) {
+      case KEY_SESSION_INIT: return "KEY_SESSION_INIT";
+      case KEY_SESSION_WAITING_FOR_MESSAGE: return "KEY_SESSION_WAITING_FOR_MESSAGE";
+      case KEY_SESSION_MESSAGE_RECEIVED: return "KEY_SESSION_MESSAGE_RECEIVED";
+      case KEY_SESSION_WAITING_FOR_LICENSE: return "KEY_SESSION_WAITING_FOR_LICENSE";
+      case KEY_SESSION_UPDATE_LICENSE: return "KEY_SESSION_UPDATE_LICENSE";
+      case KEY_SESSION_READY: return "KEY_SESSION_READY";
+      case KEY_SESSION_ERROR: return "KEY_SESSION_ERROR";
+      case KEY_SESSION_LOADED: return "KEY_SESSION_LOADED";
+      case KEY_SESSION_REMOVED: return "KEY_SESSION_REMOVED";
+      case KEY_SESSION_CLOSED: return "KEY_SESSION_CLOSED";
+      default: return "UNKNOWN";
+      }
+  }
+
 private:
   OpenCdmMediaengine* media_engine_;
   OpenCdmPlatform* platform_;
@@ -81,6 +97,7 @@ private:
   std::string m_dest_url;
 
   std::condition_variable  m_cond_var;
+  // FIXME: Aw, that's a cute volatile.
   volatile InternalSessionState m_eState;
 
   void ReadyCallback(OpenCdmPlatformSessionId platform_session_id) override;
