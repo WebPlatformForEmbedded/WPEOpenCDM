@@ -241,7 +241,7 @@ int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength,
   int ret = 1;
   uint32_t outSize;
   CDM_LOG_LINE("session_id:");
-  CDMDumpMemory(m_session_id.session_id, m_session_id.session_id_len);
+  CDMDumpMemory(reinterpret_cast<uint8_t*>(m_session_id.session_id), m_session_id.session_id_len);
   CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
   CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
 

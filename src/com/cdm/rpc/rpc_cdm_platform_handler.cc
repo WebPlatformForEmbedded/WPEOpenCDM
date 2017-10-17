@@ -122,7 +122,7 @@ RpcCdmPlatformHandler::RpcCdmPlatformHandler(
   RpcThreadCallParam *call_params = new RpcThreadCallParam();
   call_params->caller = this;
   call_params->thread_parm = parm;
-  if (!pthread_create(&thread1, NULL, RpcCdmPlatformHandler::DelegateRpcInit, call_params)) {
+  if (pthread_create(&thread1, NULL, RpcCdmPlatformHandler::DelegateRpcInit, call_params) != 0) {
       CDM_LOG_LINE("failed to create a thread: %s", strerror(errno));
       return;
   }
