@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include "open_cdm_platform_common.h"
+
 namespace media {
 
 /*
