@@ -29,7 +29,8 @@ namespace media {
  */
 class OpenCdmPlatformComCallbackReceiver {
  public:
-  // according to EME
+  // according to EME // REVIEW: To what version, where is the documentation? Or is this just
+    // someone's interpretation of an EME platform spec?
 
   virtual void ErrorCallback(OpenCdmPlatformSessionId platform_session_id,
                              uint32_t sys_err, std::string err_msg) = 0;

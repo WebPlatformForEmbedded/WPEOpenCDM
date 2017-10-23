@@ -66,8 +66,8 @@ public:
       PersistentLicense
   } LicenseType;
 
-  int CreateSession(const std::string& ,unsigned char* , int, std::string&, LicenseType);
-  int GetKeyMessage(std::string&, int*, unsigned char*, int*);
+  bool CreateSession(const std::string& ,unsigned char* , int, std::string&, LicenseType);
+  void GetKeyMessage(std::string&, int*, unsigned char*, int*);
   int SetServerCertificate(const uint8_t*, uint32_t);
   int Load(std::string&);
   int Update(unsigned char*, int, std::string&);
@@ -106,7 +106,10 @@ private:
   std::string m_dest_url;
 
   std::condition_variable  m_cond_var;
-  // FIXME: Aw, that's a cute volatile.
+  // REVIEW: This volatile seems weird, if we're not protecting this state with
+  // our mutex, then we need to fix that bug. Volatile is about make sure r/w's
+  // are visible on a **single thread**, they have nothing to do with multiple
+  // threads.
   volatile InternalSessionState m_eState;
 
   void ReadyCallback(OpenCdmPlatformSessionId platform_session_id) override;

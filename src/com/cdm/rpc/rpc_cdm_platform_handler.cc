@@ -169,10 +169,11 @@ void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
   session_id.session_id = kmm->session_id.session_id_val;
 
   std::string s(kmm->message.message_val,kmm->message.message_len);
+  CDM_LOG_LINE("message string before: %s", s.c_str());
   laURL = s.substr(0, s.find(delimiter));
 
   message = s.substr(s.find(delimiter) + delimiter.size(), s.size());
-
+  CDM_LOG_LINE("message string after: %s", message.c_str());
   //get open_media_keys instance to execute callbacks
   this->callback_receiver_->MessageCallback(session_id, message, laURL);
 }
@@ -205,7 +206,7 @@ void RpcCdmPlatformHandler::OnError1Svc(rpc_cb_error * ke, struct svc_req *)
   session_id.session_id = ke->session_id.session_id_val;
   int sys_error = 0;
   // TODO (sph): set real error message if there is any
-  this->callback_receiver_->ErrorCallback(session_id, sys_error,"KEY_ERROR");
+  callback_receiver_->ErrorCallback(session_id, sys_error,"KEY_ERROR");
 }
 
 void RpcCdmPlatformHandler::RpcCallbackPrivate(struct svc_req *rqstp, register SVCXPRT *transp)
