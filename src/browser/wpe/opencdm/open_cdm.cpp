@@ -180,6 +180,11 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
   m_cond_var.wait(lck, [=]() { return m_eState != KEY_SESSION_WAITING_FOR_LICENSE; });
   CDM_LOG_LINE("received a lience update, state is now %s", sessionStateToString(m_eState));
 
+  // FIXME: We get into this state when the key status is considered usable, why
+  // UPDATE_LICENSE is a good state to have set is anybody's guess. Mine would be
+  // that this state should be called KEY_STATUS_CHANGED. The implication here would
+  // be that the right approach is to fill responseMsg with the key status vector, but
+  // without a structured codec, that's rather nasty.
   if (m_eState == KEY_SESSION_UPDATE_LICENSE || m_eState == KEY_SESSION_REMOVED)
     ret = 0;
   else if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
@@ -321,6 +326,7 @@ void OpenCdm::MessageCallback(OpenCdmPlatformSessionId,
 
 void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_session_id, std::string message) {
   CDM_LOG_LINE("message is %s", message.c_str());
+  // FIXME: Currently this call back is a little pointless, the information about which keys are usable can't be seen by the application...
   if (message == "KeyUsable")
     m_eState = KEY_SESSION_UPDATE_LICENSE;
   else if (message == "KeyReleased")
