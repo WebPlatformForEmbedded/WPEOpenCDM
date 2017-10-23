@@ -69,31 +69,32 @@ int OpenCdm::SetServerCertificate(const uint8_t* server_certificate_data,
   return ret.platform_response ==  PLATFORM_CALL_SUCCESS;
 }
 
-int OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id, LicenseType licenseType) {
-  // FIXME: Now we're back to integer return types that don't follow the normal true/false
-  // pattern. The point of this code is to instil fear in your heart.
-  int ret = 1;
+bool OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbInitData, int cbInitData, std::string& session_id, LicenseType licenseType) {
   m_eState = KEY_SESSION_INIT;
 
   auto response = platform_->MediaKeysCreateSession(licenseType, initDataType, pbInitData, cbInitData);
-  if (response.platform_response == PLATFORM_CALL_SUCCESS) {
-    CDM_LOG_LINE("new session created");
-    m_session_id = response.session_id;
-    if (KEY_SESSION_INIT == m_eState)
-      m_eState = KEY_SESSION_WAITING_FOR_MESSAGE;
-    ret = 0;
-  } else {
-    CDM_LOG_LINE("failed to create a session");
+
+  if (response.platform_response != PLATFORM_CALL_SUCCESS) {
+    CDM_LOG_LINE("failed to create a new session");
     m_eState = KEY_SESSION_ERROR;
+    return false;
   }
 
-  session_id.assign(m_session_id.session_id, m_session_id.session_id_len);// initializing out parameter.
+  CDM_LOG_LINE("succeeded in creating a new session");
+  CDM_LOG_LINE("The initalization data is:");
+  CDMDumpMemory(pbInitData, cbInitData);
 
-  return ret;
+  m_session_id = response.session_id;
+
+  if (m_eState == KEY_SESSION_INIT)
+    m_eState = KEY_SESSION_WAITING_FOR_MESSAGE;
+
+  session_id.assign(m_session_id.session_id, m_session_id.session_id_len);
+
+  return true;
 }
 
-int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
-    unsigned char* licenseURL, int* urlLength) {
+void OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength, unsigned char* licenseURL, int* urlLength) {
 
   CDM_LOG_LINE("taking our lock");
   std::unique_lock<std::mutex> lck(m_mtx);
@@ -121,8 +122,6 @@ int OpenCdm::GetKeyMessage(std::string& challenge, int* challengeLength,
     *challengeLength = 0;
     *licenseURL= 0;
   }
-  // FIXME: Always return false??
-  return 0;
 }
 
 int OpenCdm::Load(std::string& responseMsg) {
@@ -170,7 +169,7 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
 
   int ret = 1;
 
-  CDM_LOG_LINE("received a response of %d bytes", cbResponse);
+  CDM_LOG_LINE("update response from application was contained %d bytes: ", cbResponse);
   CDMDumpMemory(pbResponse, cbResponse);
 
   platform_->MediaKeySessionUpdate((uint8_t*)pbResponse, cbResponse, m_session_id.session_id, m_session_id.session_id_len);
@@ -190,6 +189,7 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
     CDMDumpMemory(reinterpret_cast<const uint8_t*>(responseMsg.data()), responseMsg.size());
   }
 
+  CDM_LOG_LINE("return %d from Update", ret);
   return ret;
 }
 

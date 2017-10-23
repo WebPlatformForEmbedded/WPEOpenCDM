@@ -44,9 +44,12 @@ int ocdmClient::streamGetLicenseChallenge(void* ocdmDrmStream, std::string chall
 	return ret;
   }
 
-  ret = g_pOpenCdm->GetKeyMessage(challenge, challengeLength, licenseURL, urlLength);
+  // FIXME: I removed the always false return value from GetKeyMessage
+  // but now we'll return true from this function always, rather than false always. It's all
+  // completely bizzare, so who knows what might happen now.
+  g_pOpenCdm->GetKeyMessage(challenge, challengeLength, licenseURL, urlLength);
 
-  if ((!ret) && (!(*urlLength)) && (!(*challengeLength)))
+  if ((!(*urlLength)) && (!(*challengeLength)))
     cout << "key ready, no need to generate a new license request!" << endl;
   else {
     cout << "license challenge received! length: " << *challengeLength << endl;
