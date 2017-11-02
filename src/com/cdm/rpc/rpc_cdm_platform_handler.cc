@@ -168,14 +168,14 @@ void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
   session_id.session_id_len = kmm->session_id.session_id_len;
   session_id.session_id = kmm->session_id.session_id_val;
 
+  CDM_LOG_LINE("message length is %d, attempt to split with %s", kmm->message.message_len, delimiter.c_str());
+
   std::string s(kmm->message.message_val,kmm->message.message_len);
-  CDM_LOG_LINE("message string before: %s", s.c_str());
   laURL = s.substr(0, s.find(delimiter));
 
   message = s.substr(s.find(delimiter) + delimiter.size(), s.size());
-  CDM_LOG_LINE("message string after: %s", message.c_str());
-  //get open_media_keys instance to execute callbacks
-  this->callback_receiver_->MessageCallback(session_id, message, laURL);
+
+  callback_receiver_->MessageCallback(session_id, message, laURL);
 }
 
 void RpcCdmPlatformHandler::OnReady1SvcDelegate(rpc_cb_ready *keyready_param, struct svc_req *rqstp, RpcCdmPlatformHandler *p_instance)

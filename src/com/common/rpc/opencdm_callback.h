@@ -13,7 +13,10 @@
 extern "C" {
 #endif
 
-
+// REVIEW: Shouldn't the values in these structs be const?
+// I don't think you'd want to be mutating these. It also makes
+// life in C++ nicer when you don't have to worry about const
+// qualifiers for immutable types.
 struct rpc_cb_message {
 	struct {
 		u_int session_id_len;
