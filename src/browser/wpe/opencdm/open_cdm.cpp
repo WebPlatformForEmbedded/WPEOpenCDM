@@ -163,12 +163,10 @@ int OpenCdm::Load(std::string& responseMsg) {
   return ret;
 }
 
-int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg)
+// FIXME: At some point we will need to update this to return a key status vector to comply with the spec as one session can have several keys.
+OpenCdm::KeyStatus OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& responseMsg)
 {
   CDM_LOG_LINE("invoked, state is %s", sessionStateToString(m_eState));
-
-  int ret = 1;
-
   CDM_LOG_LINE("update response from application was contained %d bytes: ", cbResponse);
   CDMDumpMemory(pbResponse, cbResponse);
 
@@ -180,22 +178,20 @@ int OpenCdm::Update(unsigned char* pbResponse, int cbResponse, std::string& resp
   m_cond_var.wait(lck, [=]() { return m_eState != KEY_SESSION_WAITING_FOR_LICENSE; });
   CDM_LOG_LINE("received a lience update, state is now %s", sessionStateToString(m_eState));
 
-  // FIXME: We get into this state when the key status is considered usable, why
+  // FIXME: We get into UPDATE_LICENSE when the key status is considered usable, why
   // UPDATE_LICENSE is a good state to have set is anybody's guess. Mine would be
   // that this state should be called KEY_STATUS_CHANGED. The implication here would
   // be that the right approach is to fill responseMsg with the key status vector, but
   // without a structured codec, that's rather nasty.
-  if (m_eState == KEY_SESSION_UPDATE_LICENSE || m_eState == KEY_SESSION_REMOVED)
-    ret = 0;
-  else if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
+  if (m_eState == KEY_SESSION_MESSAGE_RECEIVED) {
     responseMsg.assign("message:");
     responseMsg.append(m_message.c_str(), m_message.length());
-    CDM_LOG_LINE("The response message contains %d bytes and its contents are:", responseMsg.size());
-    CDMDumpMemory(reinterpret_cast<const uint8_t*>(responseMsg.data()), responseMsg.size());
   }
 
-  CDM_LOG_LINE("return %d from Update", ret);
-  return ret;
+  CDM_LOG_LINE("The response message contains %d bytes and its contents are:", responseMsg.size());
+  CDMDumpMemory(reinterpret_cast<const uint8_t*>(responseMsg.data()), responseMsg.size());
+
+  return OpenCdm::internalStatusToKeyStatus();
 }
 
 int OpenCdm::Remove(std::string& responseMsg) {
@@ -340,4 +336,38 @@ void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_sessio
   m_cond_var.notify_all();
   CDM_LOG_LINE("call over, state now %s", sessionStateToString(m_eState));
 }
+
+OpenCdm::KeyStatus OpenCdm::internalStatusToKeyStatus(InternalSessionState status)
+{
+  switch(status) {
+
+  case KEY_SESSION_INIT:
+  case KEY_SESSION_WAITING_FOR_MESSAGE:
+  case KEY_SESSION_MESSAGE_RECEIVED:
+  case KEY_SESSION_WAITING_FOR_LICENSE:
+  case KEY_SESSION_LOADED:
+  case KEY_SESSION_WAITING_FOR_LICENSE_REMOVAL:
+  case KEY_SESSION_WAITING_FOR_LOAD_SESSION:
+    return OpenCdm::KeyStatus::StatusPending;
+
+  case KEY_SESSION_READY:
+  case KEY_SESSION_UPDATE_LICENSE:
+    return OpenCdm::KeyStatus::Usable;
+
+  case KEY_SESSION_ERROR:
+    return OpenCdm::KeyStatus::InternalError;
+
+  case KEY_SESSION_REMOVED:
+  case KEY_SESSION_CLOSED:
+    return OpenCdm::KeyStatus::Released;
+
+  case KEY_SESSION_EXPIRED:
+    return OpenCdm::KeyStatus::Expired;
+
+  default:
+    assert(false);
+    return OpenCdm::KeyStatus::InternalError;
+  }
+}
+
 } // namespace media
