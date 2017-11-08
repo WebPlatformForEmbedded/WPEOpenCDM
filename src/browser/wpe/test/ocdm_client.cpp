@@ -69,7 +69,7 @@ int ocdmClient::streamUpdate(void* ocdmDrmStream, unsigned char* pbResponse, int
     return ret;
   }
 
-  ret = g_pOpenCdm->Update(pbResponse, cbResponse, responseMsg);
+  ret = g_pOpenCdm->Update(pbResponse, cbResponse, responseMsg) == OpenCdm::KeyStatus::Usable ? 0 : 1;
   cout << "ProcessLicenseResponse returned: " << std::hex << ret << std::dec << endl;
 
   return ret;

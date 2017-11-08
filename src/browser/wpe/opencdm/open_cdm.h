@@ -66,11 +66,21 @@ public:
       PersistentLicense
   } LicenseType;
 
+  enum class KeyStatus {
+      Usable,
+      Expired,
+      Released,
+      OutputRestricted,
+      OutputDownscaled,
+      StatusPending,
+      InternalError
+  };
+
   bool CreateSession(const std::string& ,unsigned char* , int, std::string&, LicenseType);
   void GetKeyMessage(std::string&, int*, unsigned char*, int*);
   int SetServerCertificate(const uint8_t*, uint32_t);
   int Load(std::string&);
-  int Update(unsigned char*, int, std::string&);
+  KeyStatus Update(unsigned char*, int, std::string&);
   int Remove(std::string&);
   int Close();
   void SelectKeySystem(const std::string& );
@@ -120,6 +130,8 @@ private:
                        std::string destination_url) override;
   void OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_session_id,
                                  std::string message) override;
+  inline KeyStatus internalStatusToKeyStatus() { return internalStatusToKeyStatus(m_eState); }
+  KeyStatus internalStatusToKeyStatus(InternalSessionState status);
 
 };
 } // namespace media
