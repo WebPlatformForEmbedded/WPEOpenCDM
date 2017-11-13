@@ -496,6 +496,7 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
       == NULL) {
     clnt_perror(rpc_client, rpc_server_host.c_str());
     CDM_LOG_LINE("failed to connect to server");
+    return response;
   }
 
   // TODO(ska): parse session_id from csresult into
