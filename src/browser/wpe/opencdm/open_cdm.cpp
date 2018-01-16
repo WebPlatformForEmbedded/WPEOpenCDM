@@ -28,18 +28,19 @@ using namespace std;
 namespace media {
 
 OpenCdm::OpenCdm()
-    : media_engine_(NULL)
-    , platform_(NULL) {
-  platform_ = OpenCdmPlatformInterfaceFactory::Create(this);
-  m_eState = KEY_SESSION_INIT;
+  : platform_(OpenCdmPlatformInterfaceFactory::Create(this))
+  , m_eState(KEY_SESSION_INIT) {
+
+  CDM_LOG_LINE("called");
+
+  // TODO: It would be nice if we could call OpenCDM, this seems like a good place to let
+  // webkit pass a delegate to us.
 }
 
 OpenCdm::~OpenCdm() {
-  // FIXME: Smart pointers are smart.
-  if (media_engine_) {
-    delete(media_engine_);
-  }
+  CDM_LOG_LINE("destroy OpenCdm");
 
+  // FIXME: Smart pointers are smart.
   if (platform_) {
     platform_->MediaKeySessionRelease(m_session_id.session_id, m_session_id.session_id_len);
     delete(platform_);
@@ -55,7 +56,7 @@ void OpenCdm::SelectKeySystem(const std::string& key_system) {
 }
 
 void OpenCdm::SelectSession(const std::string& session_id_rcvd) {
-  CDM_LOG_LINE("get session for %s", session_id_rcvd.c_str());
+  CDM_LOG_LINE("select session %s", session_id_rcvd.c_str());
   // FIXME: I don't like the look of this strdup, probably a leak.
   // FIXME: Any guesses why we go from a string interface to an open struct?
   m_session_id.session_id = strdup(session_id_rcvd.c_str());
@@ -244,8 +245,8 @@ int OpenCdm::Close() {
 }
 
 int OpenCdm::ReleaseMem() {
-  if(media_engine_)
-     return media_engine_->ReleaseMem();
+  for (const auto& p : media_engines_)
+      p.second->ReleaseMem();
 
   return 0;
 }
@@ -258,15 +259,21 @@ int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength,
   CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
   CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
 
-  // mediaengine instantiation
-  if (!media_engine_) {
-    // FIXME:(ska): handle mutiple sessions
-    media_engine_ = OpenCdmMediaengineFactory::Create(m_key_system, m_session_id);
-    if (!media_engine_)
-      return ret;
-  }
+  // Note, when OpencdmSessionId is refactored (it's very silly, see the comment at the declaration) this won't be needed
+  SessionId sessionId(m_session_id.session_id, m_session_id.session_id_len);
 
-  DecryptResponse dr = media_engine_->Decrypt((const uint8_t*)ivData, ivDataLength,
+  // Note, there's a lot of sublety in the map lookup below due to the non-standard design of the media engine classes,
+  // you don't want to call ::insert or ::operator[] because that might leak a media engine if the element already exists
+  // Instead be very conservative and only call insert when it's known for a fact the map doesn't contain the key.
+  if (!media_engines_.count(sessionId)) {
+      CDM_LOG_LINE("created a new media engine");
+      media_engines_.insert(std::make_pair(sessionId, std::unique_ptr<OpenCdmMediaengine>(OpenCdmMediaengineFactory::Create(m_key_system, m_session_id))));
+
+  }
+  auto& mediaEngine = media_engines_[sessionId];
+
+  CDM_LOG_LINE("calling media engine decrypt");
+  DecryptResponse dr = mediaEngine->Decrypt((const uint8_t*)ivData, ivDataLength,
       (const uint8_t*)encryptedData, encryptedDataLength, (uint8_t*)encryptedData, outSize);
 
   if (dr.platform_response == PLATFORM_CALL_SUCCESS)
