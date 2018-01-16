@@ -33,6 +33,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <unordered_map>
 
 namespace media {
 
@@ -106,7 +107,10 @@ public:
   }
 
 private:
-  OpenCdmMediaengine* media_engine_;
+  using SessionId = std::string;
+  using MediaEnginesMap = std::unordered_map<SessionId, std::unique_ptr<OpenCdmMediaengine>>;
+  MediaEnginesMap media_engines_;
+
   OpenCdmPlatform* platform_;
   OpenCdmPlatformSessionId m_session_id;
 
