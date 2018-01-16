@@ -43,9 +43,12 @@ class OpenCdmMediaengineFactory {
  */
 OpenCdmMediaengine *OpenCdmMediaengineFactory::Create(
     std::string key_system, OpenCdmPlatformSessionId session_id) {
-    CDM_DLOG() << "Instantiate OpenCdmMediaengineImpl!";
-    return new OpenCdmMediaengineImpl(session_id.session_id,
-                                      session_id.session_id_len);
+    // not only do we completely ignore the key_system, the mediaengine impl
+    // ctor below only has one implementation, making all this abstraction a
+    // waste of brain cycles and giving nothing of value
+    std::string sessionId(session_id.session_id, session_id.session_id_len);
+    CDM_LOG_LINE("creating a media engine for key_system=%s and session_id=%s", key_system.c_str(), sessionId.c_str());
+    return new OpenCdmMediaengineImpl(session_id.session_id, session_id.session_id_len);
 }
 }  // namespace media
 
