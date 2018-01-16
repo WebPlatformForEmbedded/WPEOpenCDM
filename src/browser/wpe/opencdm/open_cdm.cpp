@@ -81,17 +81,13 @@ bool OpenCdm::CreateSession(const std::string& initDataType, unsigned char* pbIn
     return false;
   }
 
-  CDM_LOG_LINE("succeeded in creating a new session");
-  CDM_LOG_LINE("The initalization data is:");
-  CDMDumpMemory(pbInitData, cbInitData);
-
   m_session_id = response.session_id;
 
   if (m_eState == KEY_SESSION_INIT)
     m_eState = KEY_SESSION_WAITING_FOR_MESSAGE;
 
   session_id.assign(m_session_id.session_id, m_session_id.session_id_len);
-
+  CDM_LOG_LINE("created a session with id %s", session_id.c_str());
   return true;
 }
 
@@ -169,7 +165,7 @@ OpenCdm::KeyStatus OpenCdm::Update(unsigned char* pbResponse, int cbResponse, st
 {
   CDM_LOG_LINE("invoked, state is %s", sessionStateToString(m_eState));
   CDM_LOG_LINE("update response from application was contained %d bytes: ", cbResponse);
-  CDMDumpMemory(pbResponse, cbResponse);
+  //CDMDumpMemory(pbResponse, cbResponse);
 
   platform_->MediaKeySessionUpdate((uint8_t*)pbResponse, cbResponse, m_session_id.session_id, m_session_id.session_id_len);
 
@@ -248,14 +244,14 @@ int OpenCdm::ReleaseMem() {
   for (const auto& p : media_engines_)
       p.second->ReleaseMem();
 
+  // FIXME: Yet another pointless return value..
   return 0;
 }
 
 int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength, unsigned char* ivData, uint32_t ivDataLength) {
-  int ret = 1;
   uint32_t outSize;
-  CDM_LOG_LINE("session_id:");
-  CDMDumpMemory(reinterpret_cast<uint8_t*>(m_session_id.session_id), m_session_id.session_id_len);
+  std::string s(m_session_id.session_id, m_session_id.session_id_len);
+  CDM_LOG_LINE("decrypt with session id %s", s.c_str());
   CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
   CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
 
@@ -316,8 +312,8 @@ void OpenCdm::MessageCallback(OpenCdmPlatformSessionId,
                               std::string& message,
                               std::string destination_url)
 {
-  CDM_LOG_LINE("message has %d bytes:", message.size());
-  CDMDumpMemory(reinterpret_cast<const uint8_t*>(message.data()), message.size());
+  CDM_LOG_LINE("call for message");
+  //CDMDumpMemory(reinterpret_cast<const uint8_t*>(message.data()), message.size());
 
   std::unique_lock<std::mutex> lck(m_mtx);
   m_message = message;
@@ -328,7 +324,7 @@ void OpenCdm::MessageCallback(OpenCdmPlatformSessionId,
 }
 
 void OpenCdm::OnKeyStatusUpdateCallback(OpenCdmPlatformSessionId platform_session_id, std::string message) {
-  CDM_LOG_LINE("message is %s", message.c_str());
+  CDM_LOG_LINE("call for key statuses");
   // FIXME: Currently this call back is a little pointless, the information about which keys are usable can't be seen by the application...
   if (message == "KeyUsable")
     m_eState = KEY_SESSION_UPDATE_LICENSE;
