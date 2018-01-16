@@ -38,6 +38,7 @@ struct PlatformResponse {
   uint32_t sys_err;
 };
 
+// FIXME: Get rid of this, it's a terribly implemented std::string.
 struct OpenCdmPlatformSessionId {
   char *session_id;  // TODO(ska): uint16_t oder uint8_t ? CDMi: 16
   uint32_t session_id_len;
