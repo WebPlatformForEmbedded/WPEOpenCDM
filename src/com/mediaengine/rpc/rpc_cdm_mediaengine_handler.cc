@@ -124,17 +124,20 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
                                                   const uint8_t *pbData,
                                                   uint32_t cbData, uint8_t *out,
                                                   uint32_t &out_size) {
-  CDM_DLOG() << "RpcCdmMediaengineHandler::Decrypt: " << cbIv;
+  CDM_LOG_LINE("called");
   DecryptResponse response;
   response.platform_response = PLATFORM_CALL_SUCCESS;
   response.sys_err = 0;
   // TODO(sph): real decryptresponse values need to
   // be written to sharedmem as well
   LockSemaphore(idXchngSem, SEM_XCHNG_PUSH);
-  CDM_DLOG() << "LOCKed push lock";
+  //CDM_DLOG() << "LOCKed push lock";
 
   cbIv = (cbIv != 8) ? 8 : cbIv;
+  // Note that none of the return values for resource requests are looked at...
   shMemInfo->idIvShMem = AllocateSharedMemory(cbIv);
+  if (shMemInfo->idIvShMem < 0)
+      CDM_LOG_LINE("failed to allocate IV memory");
   shMemInfo->ivSize = cbIv;
 
   uint8_t *pIvShMem = reinterpret_cast<uint8_t *>(MapSharedMemory(
@@ -150,29 +153,36 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
   memcpy(pSampleShMem, pbData, cbData);
   // delete[] pbData;
 
-  CDM_DLOG() << "memcpy pSampleShMem, pbData";
+  //CDM_DLOG() << "memcpy pSampleShMem, pbData";
   shMemInfo->idSubsampleDataShMem = 0;
   shMemInfo->subsampleDataSize = 0;
-  CDM_DLOG() << "data ready to decrypt";
+  //CDM_DLOG() << "data ready to decrypt";
   UnlockSemaphore(idXchngSem, SEM_XCHNG_DECRYPT);
-  CDM_DLOG() << "WAIT for pull lock";
+  //CDM_DLOG() << "WAIT for pull lock";
   LockSemaphore(idXchngSem, SEM_XCHNG_PULL);
-  CDM_DLOG() << "LOCKed pull lock";
+  //CDM_DLOG() << "LOCKed pull lock";
   // process clear data
 
   memcpy(out, pSampleShMem, cbData);
   out_size = cbData;
 
-  CDM_DLOG() << "RUN fired!";
+  //CDM_DLOG() << "RUN fired!";
   UnlockSemaphore(idXchngSem, SEM_XCHNG_PUSH);
-  CDM_DLOG() << "UNLOCKed push lock";
+  //CDM_DLOG() << "UNLOCKed push lock";
 
   // clean up current shared mems for sample data
   int err = DetachExistingSharedMemory(pIvShMem);
-  CDM_DLOG() << "detached iv shmem " << shMemInfo->idIvShMem << ": " << err;
+  if (err < 0)
+      CDM_LOG_LINE("error detaching shared IV memory");
+  //CDM_DLOG() << "detached iv shmem " << shMemInfo->idIvShMem << ": " << err;
   err = DetachExistingSharedMemory(pSampleShMem);
-  CDM_DLOG() << "detached sample shmem " << shMemInfo->idSampleShMem << ": "
-             << err;
+  if (err < 0)
+      CDM_LOG_LINE("error detaching shared sample memory");
+
+  //CDM_DLOG() << "detached sample shmem " << shMemInfo->idSampleShMem << ": "
+  //<< err;
+
+  CDM_LOG_LINE("finished, decrypted %lu bytes", response.cbResponseData);
   return response;
 }
 

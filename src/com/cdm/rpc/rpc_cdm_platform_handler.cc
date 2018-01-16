@@ -169,11 +169,11 @@ void RpcCdmPlatformHandler::OnMessage1Svc(rpc_cb_message *kmm, struct svc_req *)
   session_id.session_id = kmm->session_id.session_id_val;
 
   std::string s(kmm->message.message_val,kmm->message.message_len);
-  CDM_LOG_LINE("message string before: %s", s.c_str());
+  //CDM_LOG_LINE("message string before: %s", s.c_str());
   laURL = s.substr(0, s.find(delimiter));
 
   message = s.substr(s.find(delimiter) + delimiter.size(), s.size());
-  CDM_LOG_LINE("message string after: %s", message.c_str());
+  //CDM_LOG_LINE("message string after: %s", message.c_str());
   //get open_media_keys instance to execute callbacks
   this->callback_receiver_->MessageCallback(session_id, message, laURL);
 }
@@ -502,10 +502,6 @@ MediaKeysCreateSessionResponse RpcCdmPlatformHandler::MediaKeysCreateSession(
   // TODO(ska): parse session_id from csresult into
   OpenCdmPlatformSessionId session_id;
   if (rpc_response->platform_val == 0) {
-    CDM_LOG_LINE("successfully got a session id of length %d:", rpc_response->session_id.session_id_len);
-    CDMDumpMemory(reinterpret_cast<const uint8_t*>(rpc_response->session_id.session_id_val),
-                  rpc_response->session_id.session_id_len);
-
     response.sys_err = rpc_response->platform_val;
     response.platform_response = PLATFORM_CALL_SUCCESS;
     session_id.session_id = rpc_response->session_id.session_id_val;
