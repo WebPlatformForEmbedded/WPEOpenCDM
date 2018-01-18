@@ -124,7 +124,7 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
                                                   const uint8_t *pbData,
                                                   uint32_t cbData, uint8_t *out,
                                                   uint32_t &out_size) {
-  CDM_LOG_LINE("called");
+  // CDM_LOG_LINE("called");
   DecryptResponse response;
   response.platform_response = PLATFORM_CALL_SUCCESS;
   response.sys_err = 0;
@@ -166,11 +166,7 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
   memcpy(out, pSampleShMem, cbData);
   out_size = cbData;
 
-  //CDM_DLOG() << "RUN fired!";
-  UnlockSemaphore(idXchngSem, SEM_XCHNG_PUSH);
-  //CDM_DLOG() << "UNLOCKed push lock";
-
-  // clean up current shared mems for sample data
+ // clean up current shared mems for sample data
   int err = DetachExistingSharedMemory(pIvShMem);
   if (err < 0)
       CDM_LOG_LINE("error detaching shared IV memory");
@@ -182,7 +178,11 @@ DecryptResponse RpcCdmMediaengineHandler::Decrypt(const uint8_t *pbIv,
   //CDM_DLOG() << "detached sample shmem " << shMemInfo->idSampleShMem << ": "
   //<< err;
 
-  CDM_LOG_LINE("finished, decrypted %lu bytes", response.cbResponseData);
+  //CDM_DLOG() << "RUN fired!";
+  UnlockSemaphore(idXchngSem, SEM_XCHNG_PUSH);
+  //CDM_DLOG() << "UNLOCKed push lock";
+ 
+  // CDM_LOG_LINE("finished, decrypted %lu bytes", response.cbResponseData);
   return response;
 }
 

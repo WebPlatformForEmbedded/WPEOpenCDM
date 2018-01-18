@@ -251,9 +251,9 @@ int OpenCdm::ReleaseMem() {
 int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength, unsigned char* ivData, uint32_t ivDataLength) {
   uint32_t outSize;
   std::string s(m_session_id.session_id, m_session_id.session_id_len);
-  CDM_LOG_LINE("decrypt with session id %s", s.c_str());
-  CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
-  CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
+  //CDM_LOG_LINE("decrypt with session id %s", s.c_str());
+  //CDM_LOG_LINE("there are %ld bytes of encrypted data", encryptedDataLength);
+  //CDM_LOG_LINE("the IV data has %ld bytes", ivDataLength);
 
   // Note, when OpencdmSessionId is refactored (it's very silly, see the comment at the declaration) this won't be needed
   SessionId sessionId(m_session_id.session_id, m_session_id.session_id_len);
@@ -268,14 +268,14 @@ int OpenCdm::Decrypt(unsigned char* encryptedData, uint32_t encryptedDataLength,
   }
   auto& mediaEngine = media_engines_[sessionId];
 
-  CDM_LOG_LINE("calling media engine decrypt");
+  //CDM_LOG_LINE("calling media engine decrypt");
   DecryptResponse dr = mediaEngine->Decrypt((const uint8_t*)ivData, ivDataLength,
       (const uint8_t*)encryptedData, encryptedDataLength, (uint8_t*)encryptedData, outSize);
 
-  if (dr.platform_response == PLATFORM_CALL_SUCCESS)
-      CDM_LOG_LINE("decryption suceeded, decrypted content has %ld bytes", dr.cbResponseData);
-  else
+  if (dr.platform_response != PLATFORM_CALL_SUCCESS)
       CDM_LOG_LINE("platform failed to decrypt content");
+  // else
+      // CDM_LOG_LINE("decryption suceeded, decrypted content has %ld bytes", dr.cbResponseData);
 
   // FIXME: Here's another place where we return irregardless of what Decrypt happened to do
   //   Until a review of callsites has occurred, all we can do is add some logging.

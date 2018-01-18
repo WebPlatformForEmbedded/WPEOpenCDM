@@ -47,7 +47,7 @@ DecryptResponse OpenCdmMediaengineImpl::Decrypt(const uint8_t *pbIv,
                                                 const uint8_t *pbData,
                                                 uint32_t cbData, uint8_t *out,
                                                 uint32_t &out_size) {
-  CDM_LOG_LINE("called");
+  // CDM_LOG_LINE("called");
   return media_engine_com_->Decrypt(pbIv, cbIv, pbData, cbData, out, out_size);
 }
 
